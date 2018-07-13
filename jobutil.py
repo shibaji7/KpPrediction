@@ -13,6 +13,7 @@ from imblearn.under_sampling import RandomUnderSampler
 
 import database as db
 import util
+import models as M
 
 np.random.seed(7)
 
@@ -55,6 +56,19 @@ def build_all_classifiers():
         pass
     return
 
+def run_deterministic_clf_reg_model(args):
+    if len(args) == 0:
+        print "python jobutil.py 2 <reg model> <year>(1995-2016)"
+    else:
+        model = args[0]
+        if args[1] == "all":
+            for y in range(1995,2017): M.run_model_based_on_deterministic_algoritms(y, model, trw=27)
+            pass
+        else:
+            y = int(args[1])
+            M.run_model_based_on_deterministic_algoritms(y, model, trw=27)
+        pass
+    return
 
 
 
@@ -66,6 +80,7 @@ if __name__ == "__main__":
     else:
         ctx = int(args[0])
         if ctx == 1: build_all_classifiers()
+        if ctx == 2: run_deterministic_clf_reg_model(args[1:])
         else: print "Invalid option!!"
         pass
     pass

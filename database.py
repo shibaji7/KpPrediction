@@ -125,3 +125,52 @@ def load_data_for_deterministic_bin_clf(th=4.5, mI=1):
     X = _o.as_matrix(_xparams)
     y = _o.as_matrix(_yparam)
     return _xparams, X, y
+
+##
+# Build dataframe data for deterministic regressor model
+##
+def load_data_for_deterministic_reg(mI=1):
+    params = ["Bx_m","By_m","Bz_m","V_m","Vx_m","Vy_m","Vz_m","PR_d_m","T_m","P_dyn_m","E_m","beta_m",
+            "Ma_m","sdates","Kp","_kp_lt","delay_time","_dkp","_dkp_lt"]
+    headers = ["B_x","B_T","sin_tc","V","n","T",
+            "P_dyn","beta","M_A","Date_WS","K_P","K_P_LT",
+            "Date_FC","K_P_delay","K_P_LT_delay"]
+    delay = 3*mI
+    fname = "out/omni_3h_%d.csv"%delay
+    if not os.path.exists(fname):
+        _o = read_omni_data()
+        _k = read_kp()
+        _dkp = []
+        _kp = []
+        delay_time = []
+        for I,rec in _o.iterrows():
+            now = rec["sdates"]
+            FC_time = now + dt.timedelta(hours=delay)
+            delay_time.append(FC_time)
+            future_kp = _k[_k.dates == FC_time]
+            now_kp = _k[_k.dates == now]
+            if len(future_kp) == 0: _dkp.append(_dkp[-1])
+            else: _dkp.append(future_kp.Kp.tolist()[0])
+            if len(now_kp) == 0: _kp.append(_kp[-1])
+            else: _kp.append(now_kp.Kp.tolist()[0])
+            pass
+        _dkp = np.array(_dkp)
+        _kp = np.array(_kp)
+        _o["_dkp"] = _dkp
+        _o["Kp"] = _kp
+        _o["delay_time"] = delay_time
+        dkp_tx = do_transform_Kp2lin(_dkp)
+        _o["_dkp_lt"] = dkp_tx
+        _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
+        _o = transform_variables(_o)
+        _o.to_csv(fname, index=False, header=True)
+        pass
+    else:
+        _o = pd.read_csv(fname)
+        _o.Date_FC = pd.to_datetime(_o.Date_FC)
+        _o.Date_WS = pd.to_datetime(_o.Date_WS)
+        pass
+    _xparams = ["B_x","B_T","sin_tc","V","n","T",
+            "P_dyn","beta","M_A","K_P_LT"]
+    _yparam = ["K_P_LT_delay"]
+    return _o, _xparams, _yparam

@@ -36,6 +36,7 @@ from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 
 
+from sklearn.externals import joblib
 from spacepy import plot as splot
 from imblearn.under_sampling import RandomUnderSampler
 import verify
@@ -139,14 +140,14 @@ def get_regressor(name, trw=27):
     
     # NN regressor
     REGs["knn"] = (KNeighborsRegressor(n_neighbors=25,weights="distance"), name, trw)
-    REG["rnn"] = (RadiusNeighborsRegressor(radius=20.0), name, trw)
+    REGs["rnn"] = (RadiusNeighborsRegressor(radius=20.0), name, trw)
     
     # ensamble models
     REGs["ada"] = (AdaBoostRegressor(), name, trw)
     REGs["bagging"] = (BaggingRegressor(n_estimators=50, max_features=3), name, trw)
-    REG["etrees"] = (ExtraTreesRegressor(n_estimators=50), name, trw)
-    REG["gboost"] = (GradientBoostingRegressor(max_depth=5,random_state=0), name, trw)
-    REG["randomforest"] = (RandomForestRegressor(n_estimators=100), name, trw)
+    REGs["etrees"] = (ExtraTreesRegressor(n_estimators=50), name, trw)
+    REGs["gboost"] = (GradientBoostingRegressor(max_depth=5,random_state=0), name, trw)
+    REGs["randomforest"] = (RandomForestRegressor(n_estimators=100), name, trw)
     return REGs[name]
 
 def __run_validation(pred,obs,year,model):
@@ -189,3 +190,16 @@ def __run_validation(pred,obs,year,model):
     _eval_details["year"] = year
     _eval_details["model"] = model
     return _eval_details
+
+def get_best_determinsistic_classifier(f_clf):
+    if not os.path.exists(f_clf):
+        # Dataset
+        _xparams,X,y = db.load_data_for_deterministic_bin_clf()
+        rus = RandomUnderSampler(return_indices=True)
+        X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
+        clf = RandomForestClassifier(n_estimators=100)
+        clf.fit(X_resampled,y_resampled)
+        joblib.dump(clf, f_clf)
+    else:
+        clf = joblib.load(f_clf)
+    return clf
