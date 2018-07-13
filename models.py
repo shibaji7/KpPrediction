@@ -105,9 +105,9 @@ def run_detrmnstic_model_per_year(details):
     reg = details[1]
     clf = details[2]
     data = details[3]
-    N = 8*120
+    N = 8*30*8
     #N = 1
-    _dates = [dt.datetime(y,6,1) + dt.timedelta(hours=i*3) for i in range(N)]
+    _dates = [dt.datetime(y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
     print("-->Process for year:%d"%y)
     for dn in _dates: 
         th = DeterministicModelPerDataPoint(y,reg,clf,dn,data)
