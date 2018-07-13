@@ -3,8 +3,6 @@
 ##
 
 import os
-import matplotlib
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import scipy.io as io
@@ -115,9 +113,15 @@ def load_data_for_deterministic_bin_clf(th=4.5, mI=1):
     _o["Kp"] = _kp
     _o["delay_time"] = delay_time
     dkp_tx = do_transform_Kp2lin(_dkp)
-    _o["_dkp_lt"] =dkp_tx
+    _o["_dkp_lt"] = dkp_tx
     _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
+    _o = transform_variables(_o) 
     stormL = np.zeros(len(_dkp))
     stormL[dkp_tx > th] = 1.
     _o["stormL"] = stormL
-    return _o
+    _xparams = ["B_x","B_T","sin_tc","V","n","T",
+            "P_dyn","beta","M_A","K_P_LT"]
+    _yparam = ["stormL"]
+    X = _o.as_matrix(_xparams)
+    y = _o.as_matrix(_yparam)
+    return _xparams, X, y

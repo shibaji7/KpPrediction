@@ -4,6 +4,7 @@
 
 import os
 import matplotlib
+matplotlib.use("Agg")
 import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,7 +28,15 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc, confusion_matrix
 
+from sklearn.dummy import DummyRegressor
+from sklearn.linear_model import LinearRegression, ElasticNet, BayesianRidge
+from sklearn.svm import LinearSVR
+from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
+from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 
+
+from spacepy import plot as splot
 from imblearn.under_sampling import RandomUnderSampler
 import verify
 from verify import Contingency2x2
@@ -81,7 +90,7 @@ def get_roc_details(clf, X_test, y_test):
         pass
     fpr, tpr, threshold = roc_curve(y_test, y_score)
     roc_auc = auc(fpr, tpr)
-    return y_score, fpr, tpr, roc_au
+    return y_score, fpr, tpr, roc_auc
 
 def plot_deterministic_roc_curves(roc_eval_details):
     fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(15,10))
@@ -114,3 +123,69 @@ def validate_model_matrices(clf, X_test, y_true):
     CM = confusion_matrix(y_true, y_pred)
     C2x2 = Contingency2x2(CM.T)
     return C2x2
+
+
+def get_regressor(name, trw=27):
+    REGs = {}
+    # basic regressor            
+    REGs["dummy"] = (DummyRegressor(strategy="median"), name, trw)
+    REGs["regression"] = (LinearRegression(), name, trw)
+    REGs["elasticnet"] = (ElasticNet(alpha=.1,tol=1e-6), name, trw)
+    REGs["bayesianridge"] = (BayesianRidge(n_iter=300, tol=1e-5, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06, fit_intercept=True), name, trw)
+    
+    # decission trees
+    REGs["dtree"] = (DecisionTreeRegressor(random_state=0), name, trw)
+    REGs["etree"] = (ExtraTreeRegressor(random_state=0), name, trw)
+    
+    # NN regressor
+    REGs["knn"] = (KNeighborsRegressor(n_neighbors=25,weights="distance"), name, trw)
+    REG["rnn"] = (RadiusNeighborsRegressor(radius=20.0), name, trw)
+    
+    # ensamble models
+    REGs["ada"] = (AdaBoostRegressor(), name, trw)
+    REGs["bagging"] = (BaggingRegressor(n_estimators=50, max_features=3), name, trw)
+    REG["etrees"] = (ExtraTreesRegressor(n_estimators=50), name, trw)
+    REG["gboost"] = (GradientBoostingRegressor(max_depth=5,random_state=0), name, trw)
+    REG["randomforest"] = (RandomForestRegressor(n_estimators=100), name, trw)
+    return REGs[name]
+
+def __run_validation(pred,obs,year,model):
+    pred,obs = np.array(pred),np.array(obs)
+    _eval_details = {}
+    try: _eval_details["bias"] = verify.bias(pred,obs)
+    except: _eval_details["bias"] = np.NaN
+    try: _eval_details["meanPercentageError"] = verify.meanPercentageError(pred,obs)
+    except: _eval_details["meanPercentageError"] = np.NaN
+    try: _eval_details["medianLogAccuracy"] = verify.medianLogAccuracy(pred,obs)
+    except: _eval_details["medianLogAccuracy"] = np.NaN
+    try:_eval_details["symmetricSignedBias"] = verify.symmetricSignedBias(pred,obs)
+    except: _eval_details["symmetricSignedBias"] = np.NaN
+    try: _eval_details["meanSquaredError"] = verify.meanSquaredError(pred,obs)
+    except: _eval_details["meanSquaredError"] = np.NaN
+    try: _eval_details["RMSE"] = verify.RMSE(pred,obs)
+    except: _eval_details["RMSE"] = np.NaN
+    try: _eval_details["meanAbsError"] = verify.meanAbsError(pred,obs)
+    except: _eval_details["meanAbsError"] = np.NaN
+    try: _eval_details["medAbsError"] = verify.medAbsError(pred,obs)
+    except: _eval_details["medAbsError"] = np.NaN
+    
+    try: _eval_details["nRMSE"] = verify.nRMSE(pred,obs)
+    except: _eval_details["nRMSE"] = np.NaN
+    try: _eval_details["forecastError"] = np.mean(verify.forecastError(pred,obs))
+    except: _eval_details["forecastError"] = np.NaN
+    try: _eval_details["logAccuracy"] = np.mean(verify.logAccuracy(pred,obs))
+    except: _eval_details["logAccuracy"] = np.NaN
+    
+    try: _eval_details["medSymAccuracy"] = verify.medSymAccuracy(pred,obs)
+    except: _eval_details["medSymAccuracy"] = np.NaN
+    try: _eval_details["meanAPE"] = verify.meanAPE(pred,obs)
+    except: _eval_details["meanAPE"] = np.NaN
+    try: _eval_details["medAbsDev"] = verify.medAbsDev(pred)
+    except: _eval_details["medAbsDev"] = np.NaN
+    try: _eval_details["rSD"] = verify.rSD(pred)
+    except: _eval_details["rSD"] = np.NaN
+    try: _eval_details["rCV"] = verify.rCV(pred)
+    except: _eval_details["rCV"] = np.NaN
+    _eval_details["year"] = year
+    _eval_details["model"] = model
+    return _eval_details
