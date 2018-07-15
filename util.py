@@ -5,12 +5,13 @@
 import os
 import matplotlib
 matplotlib.use("Agg")
+matplotlib.rcParams['agg.path.chunksize'] = 10000
 import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import math
-import scipy.stats import pearsonr
+from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
 np.random.seed(7)
@@ -249,7 +250,7 @@ def get_stats(model, trw):
     splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,10))
     ax.plot(y_pred,y_obs)
-    strx = "RMSE:%.2f\nr:"%(_eval_details["RMSE"],_eval_details["r"])
+    strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
     ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_xlabel(r"$K_{P_{pred}}$")
     ax.set_xlabel(r"$K_{P_{obs}}$")
