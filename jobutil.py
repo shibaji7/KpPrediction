@@ -17,9 +17,11 @@ import models as M
 
 np.random.seed(7)
 
-def build_all_classifiers():
+def build_all_classifiers(goes):
     # Dataset
-    _xparams,X,y = db.load_data_for_deterministic_bin_clf()
+    if goes == "1": _xparams,X,y = db.load_data_for_deterministic_bin_clf()
+    else: _xparams,X,y = db.load_data_with_goes_for_deterministic_bin_clf()
+    print(X)
     rus = RandomUnderSampler(return_indices=True)
     X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
@@ -46,7 +48,7 @@ def build_all_classifiers():
             _C2x2[name] = util.validate_model_matrices(clf, X_test, y_test)
             pass
         pass
-    util.plot_deterministic_roc_curves(roc_eval_details)
+    util.plot_deterministic_roc_curves(roc_eval_details, goes)
     for name in _C2x2.keys():
         print("Running '%s' model" % name)
         print("==================")
@@ -173,7 +175,7 @@ if __name__ == "__main__":
     if len(args) == 0: print "Invalid call sequence!! python jobutil.py {1/2/3...}"
     else:
         ctx = int(args[0])
-        if ctx == 1: build_all_classifiers()
+        if ctx == 1: build_all_classifiers(args[1])
         if ctx == 2: run_deterministic_clf_reg_model(args[1:])
         if ctx == 3: run_gp_clf_reg_model(args[1:])
         if ctx == 4: run_model_stats(args[1:])

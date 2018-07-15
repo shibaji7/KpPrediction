@@ -102,7 +102,7 @@ def get_roc_details(clf, X_test, y_test):
     roc_auc = auc(fpr, tpr)
     return y_score, fpr, tpr, roc_auc
 
-def plot_deterministic_roc_curves(roc_eval_details):
+def plot_deterministic_roc_curves(roc_eval_details, tag):
     fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(15,10))
     fig.subplots_adjust(wspace=0.5,hspace=0.5)
     splot.style("spacepy")
@@ -125,7 +125,7 @@ def plot_deterministic_roc_curves(roc_eval_details):
         ax.legend(loc="lower right",prop={"size": 7})
         I = I + 1
         pass
-    fig.savefig("out/deterministinc_forecast_models_roc_curves.png",bbox_inches="tight")
+    fig.savefig("out/deterministinc_forecast_models_roc_curves_%s.png"%tag,bbox_inches="tight")
     return
 
 def validate_model_matrices(clf, X_test, y_true):
@@ -174,7 +174,7 @@ def get_gpr(kernel_type, hyp, nrst = 10, trw=27):
     gpr = GaussianProcessRegressor(kernel = kernel, n_restarts_optimizer = nrst)
     return (gpr, "GPR", trw)
 
-def get_lstm(ishape,loop_back=1, trw = 27):
+def get_lstm(ishape,look_back=1, trw = 27):
     model = Sequential()
     model.add(LSTM(10, input_shape=(look_back, ishape)))
     model.add(Dense(1))
@@ -253,6 +253,6 @@ def get_stats(model, trw):
     strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
     ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_xlabel(r"$K_{P_{pred}}$")
-    ax.set_xlabel(r"$K_{P_{obs}}$")
+    ax.set_ylabel(r"$K_{P_{obs}}$")
     fig.savefig("out/stat/det.%s.pred.%d.png"%(model,trw))
     return
