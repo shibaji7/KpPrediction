@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import math
+import scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 
 np.random.seed(7)
@@ -32,15 +33,22 @@ from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression, ElasticNet, BayesianRidge
 from sklearn.svm import LinearSVR
 from sklearn.tree import DecisionTreeRegressor, ExtraTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor, RadiusNeighborsRegressor
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.ensemble import AdaBoostRegressor, BaggingRegressor, ExtraTreesRegressor, GradientBoostingRegressor, RandomForestRegressor
 
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic as RQ
 
 from sklearn.externals import joblib
 from spacepy import plot as splot
 from imblearn.under_sampling import RandomUnderSampler
 import verify
 from verify import Contingency2x2
+
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+
 
 def get_classifiers():
     # basic classifires
@@ -131,16 +139,15 @@ def get_regressor(name, trw=27):
     # basic regressor            
     REGs["dummy"] = (DummyRegressor(strategy="median"), name, trw)
     REGs["regression"] = (LinearRegression(), name, trw)
-    REGs["elasticnet"] = (ElasticNet(alpha=.1,tol=1e-6), name, trw)
+    REGs["elasticnet"] = (ElasticNet(alpha=.5,tol=1e-2), name, trw)
     REGs["bayesianridge"] = (BayesianRidge(n_iter=300, tol=1e-5, alpha_1=1e-06, alpha_2=1e-06, lambda_1=1e-06, lambda_2=1e-06, fit_intercept=True), name, trw)
     
     # decission trees
-    REGs["dtree"] = (DecisionTreeRegressor(random_state=0), name, trw)
-    REGs["etree"] = (ExtraTreeRegressor(random_state=0), name, trw)
+    REGs["dtree"] = (DecisionTreeRegressor(random_state=0,max_depth=5), name, trw)
+    REGs["etree"] = (ExtraTreeRegressor(random_state=0,max_depth=5), name, trw)
     
     # NN regressor
     REGs["knn"] = (KNeighborsRegressor(n_neighbors=25,weights="distance"), name, trw)
-    REGs["rnn"] = (RadiusNeighborsRegressor(radius=20.0), name, trw)
     
     # ensamble models
     REGs["ada"] = (AdaBoostRegressor(), name, trw)
@@ -150,45 +157,72 @@ def get_regressor(name, trw=27):
     REGs["randomforest"] = (RandomForestRegressor(n_estimators=100), name, trw)
     return REGs[name]
 
-def __run_validation(pred,obs,year,model):
+def get_hyp_param(kernel_type):
+    hyp = {}
+    if kernel_type == "RBF": hyp["l"] = 1.0
+    if kernel_type == "RQ": 
+        hyp["l"] = 1.0
+        hyp["a"] = 0.1
+    if kernel_type == "Matern": hyp["l"] = 1.0
+    return hyp
+
+def get_gpr(kernel_type, hyp, nrst = 10, trw=27):
+    if kernel_type == "RBF": kernel = RBF(length_scale=hyp["l"],length_scale_bounds=(1e-02, 1e2))
+    if kernel_type == "RQ": kernel = RQ(length_scale=hyp["l"],alpha=hyp["a"],length_scale_bounds=(1e-02, 1e2),alpha_bounds=(1e-2, 1e2))
+    if kernel_type == "Matern": kernel = Matern(length_scale=hyp["l"],length_scale_bounds=(1e-02, 1e2), nu=1.4)
+    gpr = GaussianProcessRegressor(kernel = kernel, n_restarts_optimizer = nrst)
+    return (gpr, "GPR", trw)
+
+def get_lstm(ishape,loop_back=1, trw = 27):
+    model = Sequential()
+    model.add(LSTM(10, input_shape=(look_back, ishape)))
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+    return (model, "LSTM", trw)
+
+def run_validation(pred,obs,year,model):
     pred,obs = np.array(pred),np.array(obs)
     _eval_details = {}
-    try: _eval_details["bias"] = verify.bias(pred,obs)
+    _eval_details["range"] = "N"
+    if max(pred) > 9. or min(pred) < 0.: _eval_details["range"] = "Y"
+    try: _eval_details["bias"] = np.round(verify.bias(pred,obs),2)
     except: _eval_details["bias"] = np.NaN
-    try: _eval_details["meanPercentageError"] = verify.meanPercentageError(pred,obs)
+    try: _eval_details["meanPercentageError"] = np.round(verify.meanPercentageError(pred,obs),2)
     except: _eval_details["meanPercentageError"] = np.NaN
-    try: _eval_details["medianLogAccuracy"] = verify.medianLogAccuracy(pred,obs)
+    try: _eval_details["medianLogAccuracy"] = np.round(verify.medianLogAccuracy(pred,obs),3)
     except: _eval_details["medianLogAccuracy"] = np.NaN
-    try:_eval_details["symmetricSignedBias"] = verify.symmetricSignedBias(pred,obs)
+    try:_eval_details["symmetricSignedBias"] = np.round(verify.symmetricSignedBias(pred,obs),3)
     except: _eval_details["symmetricSignedBias"] = np.NaN
-    try: _eval_details["meanSquaredError"] = verify.meanSquaredError(pred,obs)
+    try: _eval_details["meanSquaredError"] = np.round(verify.meanSquaredError(pred,obs),2)
     except: _eval_details["meanSquaredError"] = np.NaN
-    try: _eval_details["RMSE"] = verify.RMSE(pred,obs)
+    try: _eval_details["RMSE"] = np.round(verify.RMSE(pred,obs),2)
     except: _eval_details["RMSE"] = np.NaN
-    try: _eval_details["meanAbsError"] = verify.meanAbsError(pred,obs)
+    try: _eval_details["meanAbsError"] = np.round(verify.meanAbsError(pred,obs),2)
     except: _eval_details["meanAbsError"] = np.NaN
-    try: _eval_details["medAbsError"] = verify.medAbsError(pred,obs)
+    try: _eval_details["medAbsError"] = np.round(verify.medAbsError(pred,obs),2)
     except: _eval_details["medAbsError"] = np.NaN
     
-    try: _eval_details["nRMSE"] = verify.nRMSE(pred,obs)
+    try: _eval_details["nRMSE"] = np.round(verify.nRMSE(pred,obs),2)
     except: _eval_details["nRMSE"] = np.NaN
-    try: _eval_details["forecastError"] = np.mean(verify.forecastError(pred,obs))
+    try: _eval_details["forecastError"] = np.round(np.mean(verify.forecastError(pred,obs)),2)
     except: _eval_details["forecastError"] = np.NaN
-    try: _eval_details["logAccuracy"] = np.mean(verify.logAccuracy(pred,obs))
+    try: _eval_details["logAccuracy"] = np.round(np.mean(verify.logAccuracy(pred,obs)),2)
     except: _eval_details["logAccuracy"] = np.NaN
     
-    try: _eval_details["medSymAccuracy"] = verify.medSymAccuracy(pred,obs)
+    try: _eval_details["medSymAccuracy"] = np.round(verify.medSymAccuracy(pred,obs),2)
     except: _eval_details["medSymAccuracy"] = np.NaN
-    try: _eval_details["meanAPE"] = verify.meanAPE(pred,obs)
+    try: _eval_details["meanAPE"] = np.round(verify.meanAPE(pred,obs),2)
     except: _eval_details["meanAPE"] = np.NaN
-    try: _eval_details["medAbsDev"] = verify.medAbsDev(pred)
+    try: _eval_details["medAbsDev"] = np.round(verify.medAbsDev(pred),2)
     except: _eval_details["medAbsDev"] = np.NaN
-    try: _eval_details["rSD"] = verify.rSD(pred)
+    try: _eval_details["rSD"] = np.round(verify.rSD(pred),2)
     except: _eval_details["rSD"] = np.NaN
-    try: _eval_details["rCV"] = verify.rCV(pred)
+    try: _eval_details["rCV"] = np.round(verify.rCV(pred),2)
     except: _eval_details["rCV"] = np.NaN
     _eval_details["year"] = year
     _eval_details["model"] = model
+    r,_ =  pearsonr(pred,obs)
+    _eval_details["r"] = r
     return _eval_details
 
 def get_best_determinsistic_classifier(f_clf):
@@ -203,3 +237,21 @@ def get_best_determinsistic_classifier(f_clf):
     else:
         clf = joblib.load(f_clf)
     return clf
+
+def get_stats(model, trw):
+    fname = "out/det.%s.pred.%d.csv"%(model,trw)
+    _o = pd.read_csv(fname)
+    _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
+    y_pred = _o.y_pred.tolist()
+    y_obs = _o.y_obs.tolist()
+    _eval_details =  run_validation(y_pred,y_obs,"[1995-2016]",model)
+    print _eval_details 
+    splot.style("spacepy")
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,10))
+    ax.plot(y_pred,y_obs)
+    strx = "RMSE:%.2f\nr:"%(_eval_details["RMSE"],_eval_details["r"])
+    ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
+    ax.set_xlabel(r"$K_{P_{pred}}$")
+    ax.set_xlabel(r"$K_{P_{obs}}$")
+    fig.savefig("out/stat/det.%s.pred.%d.png"%(model,trw))
+    return
