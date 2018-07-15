@@ -181,7 +181,6 @@ if __name__ == "__main__":
         if ctx == 4: run_model_stats(args[1:])
         if ctx == 5: run_lstm_clf_reg_model(args[1:])
         if ctx == 9: build_all_regressor()
-        else: print "Invalid option!!"
         pass
     pass
     

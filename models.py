@@ -212,7 +212,7 @@ def run_model_based_on_gp(Y, kt = "RQ", model="GPR", trw=27):
     data_array = [(_o, _xparams, _yparam)] * len(_dates)
     _a = []
     for x,y,z,dn,k,aw in zip(years, regs, clfs, _dates, data_array, alt_wins): _a.append((x,y,z,dn,k,aw))
-    date_pool = Pool(30)
+    date_pool = Pool(12)
     date_pool.map(run_gp_model_per_date, _a)
     return
 
@@ -220,9 +220,8 @@ def run_model_based_on_gp(Y, kt = "RQ", model="GPR", trw=27):
 ###
 #  LSTM model
 ###
-class LSTMPerDataPoint(threading.Thread):
+class LSTMPerDataPoint(object):
     def __init__(self, y, reg_det, clf, dn, data, alt_win):
-        threading.Thread.__init__(self)
         self.y = y
         self.reg = reg_det[0]
         self.clf = clf
@@ -310,7 +309,8 @@ class LSTMPerDataPoint(threading.Thread):
 
 def run_lstm_model_per_date(details):
     y = details[0]
-    reg = details[1]
+    reg_details = details[1]
+    reg = util.get_lstm(ishape=reg_details[0],look_back=reg_details[1],trw=reg_details[2])
     clf = details[2]
     dn = details[3]
     data = details[4]
@@ -324,7 +324,7 @@ def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
     f_clf = "out/rf.pkl"
     clf = util.get_best_determinsistic_classifier(f_clf)
-    reg = util.get_lstm(ishape=10,look_back=1,trw=trw)
+    reg = (10,1,trw)
     N = 1
     _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
     print("-->Process for year:%d"%Y)
@@ -335,6 +335,6 @@ def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     data_array = [(_o, _xparams, _yparam)] * len(_dates)
     _a = []
     for x,y,z,dn,k,aw in zip(years, regs, clfs, _dates, data_array, alt_wins): _a.append((x,y,z,dn,k,aw))
-    date_pool = Pool(2)
+    date_pool = Pool(10)
     date_pool.map(run_lstm_model_per_date, _a)
     return

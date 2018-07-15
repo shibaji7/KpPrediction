@@ -200,8 +200,10 @@ def load_data_with_goes_for_deterministic_bin_clf(th=4.5, mI=1):
     _dkp = []
     _kp = []
     delay_time = []
-    _goes_a = []
-    _goes_b = []
+    _goes_am = []
+    _goes_bm = []
+    _goes_as = []
+    _goes_bs = []
     for I,rec in _o.iterrows():
         now = rec["sdates"]
         FC_time = now + dt.timedelta(hours=delay)
@@ -209,11 +211,15 @@ def load_data_with_goes_for_deterministic_bin_clf(th=4.5, mI=1):
         now_g = _g[_g.times == now]
         print now
         if len(now_g) == 0:
-            _goes_a.append(_goes_a[-1])
-            _goes_b.append(_goes_b[-1])
+            _goes_am.append(_goes_am[-1])
+            _goes_bm.append(_goes_bm[-1])
+            _goes_as.append(_goes_as[-1])
+            _goes_bs.append(_goes_bs[-1])
         else:
-            _goes_a.append(now_g._a.tolist()[0]) 
-            _goes_b.append(now_g._b.tolist()[0]) 
+            _goes_am.append(now_g._a_max.tolist()[0]) 
+            _goes_bm.append(now_g._b_max.tolist()[0])
+            _goes_as.append(now_g._a_std.tolist()[0])
+            _goes_bs.append(now_g._b_std.tolist()[0])
         future_kp = _k[_k.dates == FC_time]
         now_kp = _k[_k.dates == now]
         if len(future_kp) == 0: _dkp.append(_dkp[-1])
@@ -230,13 +236,15 @@ def load_data_with_goes_for_deterministic_bin_clf(th=4.5, mI=1):
     _o["_dkp_lt"] = dkp_tx
     _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
     _o = transform_variables(_o) 
-    _o["_a"] = _goes_a
-    _o["_b"] = _goes_b
+    _o["_a_max"] = _goes_am
+    _o["_b_max"] = _goes_bm
+    _o["_a_std"] = _goes_as
+    _o["_b_std"] = _goes_bs
     stormL = np.zeros(len(_dkp))
     stormL[dkp_tx > th] = 1.
     _o["stormL"] = stormL
     _xparams = ["B_x","B_T","sin_tc","V","n","T",
-            "P_dyn","beta","M_A","K_P_LT","_a","_b"]
+            "P_dyn","beta","M_A","K_P_LT","_a_max","_b_max","_a_std","_b_std"]
     _yparam = ["stormL"]
     X = _o.as_matrix(_xparams)
     y = _o.as_matrix(_yparam)
@@ -260,8 +268,10 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
         _dkp = []
         _kp = []
         delay_time = []
-        _goes_a = []
-        _goes_b = []
+        _goes_am = []
+        _goes_bm = []
+        _goes_as = []
+        _goes_bs = []
         for I,rec in _o.iterrows():
             now = rec["sdates"]
             FC_time = now + dt.timedelta(hours=delay)
@@ -270,24 +280,30 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
             now_kp = _k[_k.dates == now]
             now_g = _g[_g.times == now]
             if len(now_g) == 0:
-                _goes_a.append(_goes_a[-1])
-                _goes_b.append(_goes_b[-1])
+                _goes_am.append(_goes_am[-1])
+                _goes_bm.append(_goes_bm[-1])
+                _goes_as.append(_goes_as[-1])
+                _goes_bs.append(_goes_bs[-1])
             else:
-                _goes_a.append(now_g._a.tolist()[0])
-                _goes_b.append(now_g._b.tolist()[0])
+                _goes_am.append(now_g._a_max.tolist()[0])
+                _goes_bm.append(now_g._b_max.tolist()[0])
+                _goes_as.append(now_g._a_std.tolist()[0])
+                _goes_bs.append(now_g._b_std.tolist()[0])
             if len(future_kp) == 0: _dkp.append(_dkp[-1])
             else: _dkp.append(future_kp.Kp.tolist()[0])
             if len(now_kp) == 0: _kp.append(_kp[-1])
             else: _kp.append(now_kp.Kp.tolist()[0])
             pass
-        _o["_a"] = _goes_a
-        _o["_b"] = _goes_b
         _dkp = np.array(_dkp)
         _kp = np.array(_kp)
         _o["_dkp"] = _dkp
         _o["Kp"] = _kp
         _o["delay_time"] = delay_time
         dkp_tx = do_transform_Kp2lin(_dkp)
+        _o["_a_max"] = _goes_am
+        _o["_b_max"] = _goes_bm
+        _o["_a_std"] = _goes_as
+        _o["_b_std"] = _goes_bs
         _o["_dkp_lt"] = dkp_tx
         _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
         _o = transform_variables(_o)
@@ -299,7 +315,7 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
         _o.Date_WS = pd.to_datetime(_o.Date_WS)
         pass
     _xparams = ["B_x","B_T","sin_tc","V","n","T",
-            "P_dyn","beta","M_A","K_P_LT","_a","_b"]
+            "P_dyn","beta","M_A","K_P_LT","_a_max","_b_max","_a_std","_b_std"]
     _yparam = ["K_P_LT_delay"]
     return _o, _xparams, _yparam
 
