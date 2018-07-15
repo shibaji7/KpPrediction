@@ -21,10 +21,10 @@ def build_all_classifiers(goes):
     # Dataset
     if goes == "1": _xparams,X,y = db.load_data_for_deterministic_bin_clf()
     else: _xparams,X,y = db.load_data_with_goes_for_deterministic_bin_clf()
-    print(X)
     rus = RandomUnderSampler(return_indices=True)
     X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
-    X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y[:,0], test_size=1.0/3.0, random_state=42)
+    #X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
 
     # Initialize metrix
     CLF = util.get_classifiers()
