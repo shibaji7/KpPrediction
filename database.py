@@ -319,3 +319,77 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
     _yparam = ["K_P_LT_delay"]
     return _o, _xparams, _yparam
 
+
+##
+# Build X,y (goes) data for deterministic classifier model
+##
+def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False):
+    params = ["Bx_m","By_m","Bz_m","V_m","Vx_m","Vy_m","Vz_m","PR_d_m","T_m","P_dyn_m","E_m","beta_m",
+            "Ma_m","sdates","Kp","_kp_lt","delay_time","_dkp","_dkp_lt"]
+    headers = ["B_x","B_T","sin_tc","V","n","T",
+            "P_dyn","beta","M_A","Date_WS","K_P","K_P_LT",
+            "Date_FC","K_P_delay","K_P_LT_delay"]
+    delay = 3*mI
+    _g = read_goes()
+    print(_g.head())
+    _o = read_omni_data()
+    #_o = _o[_o.sdates<dt.datetime(1996,1,1)]
+    _k = read_kp()
+    _dkp = []
+    _kp = []
+    delay_time = []
+    _goes_am = []
+    _goes_bm = []
+    _goes_as = []
+    _goes_bs = []
+    for I,rec in _o.iterrows():
+        now = rec["sdates"]
+        FC_time = now + dt.timedelta(hours=delay)
+        delay_time.append(FC_time)
+        now_g = _g[_g.times == now]
+        if len(now_g) == 0:
+            _goes_am.append(_goes_am[-1])
+            _goes_bm.append(_goes_bm[-1])
+            _goes_as.append(_goes_as[-1])
+            _goes_bs.append(_goes_bs[-1])
+        else:
+            _goes_am.append(now_g._a_max.tolist()[0]) 
+            _goes_bm.append(now_g._b_max.tolist()[0])
+            _goes_as.append(now_g._a_std.tolist()[0])
+            _goes_bs.append(now_g._b_std.tolist()[0])
+        future_kp = _k[_k.dates == FC_time]
+        now_kp = _k[_k.dates == now]
+        if len(future_kp) == 0: _dkp.append(_dkp[-1])
+        else: _dkp.append(future_kp.Kp.tolist()[0])
+        if len(now_kp) == 0: _kp.append(_kp[-1])
+        else: _kp.append(now_kp.Kp.tolist()[0])
+        pass
+    _dkp = np.array(_dkp)
+    _kp = np.array(_kp)
+    _o["_dkp"] = _dkp
+    _o["Kp"] = _kp
+    _o["delay_time"] = delay_time
+    dkp_tx = do_transform_Kp2lin(_dkp)
+    _o["_dkp_lt"] = dkp_tx
+    _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
+    _o = transform_variables(_o)
+    if isgoes:
+        _o["_a_max"] = _goes_am
+        _o["_b_max"] = _goes_bm
+        _o["_a_std"] = _goes_as
+        _o["_b_std"] = _goes_bs
+        pass
+    stormL = np.zeros(len(_dkp))
+    stormL[dkp_tx > th] = 1.
+    _o["stormL"] = stormL
+    if isgoes:
+        _xparams = ["B_x","B_T","sin_tc","V","n","T",
+                "P_dyn","beta","M_A","K_P_LT","_a_max","_b_max","_a_std","_b_std"]
+    else:
+        _xparams = ["B_x","B_T","sin_tc","V","n","T",
+                "P_dyn","beta","M_A","K_P_LT"]
+    _yparam = ["stormL"]
+    X = _o.as_matrix(_xparams)
+    y = _o.as_matrix(_yparam)
+    return _xparams, X, y
+

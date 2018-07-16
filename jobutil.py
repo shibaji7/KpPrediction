@@ -23,8 +23,8 @@ def build_all_classifiers(goes):
     else: _xparams,X,y = db.load_data_with_goes_for_deterministic_bin_clf()
     rus = RandomUnderSampler(return_indices=True)
     X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
-    X_train, X_test, y_train, y_test = train_test_split(X, y[:,0], test_size=1.0/3.0, random_state=42)
-    #X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
+    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=1.0/3.0, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
 
     # Initialize metrix
     CLF = util.get_classifiers()
@@ -58,9 +58,18 @@ def build_all_classifiers(goes):
         pass
     return
 
+def build_lstm_classification(goes):
+    if goes == 0: isgoes = False
+    else: isgoes = True
+    rus = RandomUnderSampler(return_indices=True)
+    _xparams,X,y = db.load_data_with_goes_for_lstm_bin_clf(isgoes = False)
+    X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
+    X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
+    clf = util.get_lstm_classifier(X.shape[1])
+    clf.fit(X_train, y_train, batch_size=64, nb_epoch=10, validation_split = 0.1, verbose = 1)
+    return
+
 def build_all_regressor():
-    regs = ["dummy","regression","elasticnet","bayesianridge","knn","dtree","etree","ada","bagging",
-            "etrees","gboost","randomforest"]
     _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
     _oh = _o[_o[_yparam[0]] >= 5.5]
     _ol = _o[_o[_yparam[0]] <= 5.5]
@@ -180,7 +189,7 @@ if __name__ == "__main__":
         if ctx == 3: run_gp_clf_reg_model(args[1:])
         if ctx == 4: run_model_stats(args[1:])
         if ctx == 5: run_lstm_clf_reg_model(args[1:])
-        if ctx == 9: build_all_regressor()
+        if ctx == 9: build_lstm_classification(args[1])
         pass
     pass
     

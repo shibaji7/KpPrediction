@@ -47,8 +47,7 @@ import verify
 from verify import Contingency2x2
 
 from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import LSTM
+from keras.layers import Dense,LSTM,Embedding,Dropout
 
 
 def get_classifiers():
@@ -176,10 +175,21 @@ def get_gpr(kernel_type, hyp, nrst = 10, trw=27):
 
 def get_lstm(ishape,look_back=1, trw = 27):
     model = Sequential()
-    model.add(LSTM(10, input_shape=(look_back, ishape)))
+    model.add(LSTM(4, input_shape=(look_back, ishape)))
     model.add(Dense(1))
-    model.compile(loss='mean_squared_error', optimizer='adam')
+    model.compile(loss='mean_squared_error', optimizer='rmsprop')
     return (model, "LSTM", trw)
+
+def get_lstm_classifier(ishape):
+    model = Sequential()
+    model.add(Embedding(input_dim = 188, output_dim = 50, input_length = ishape))
+    model.add(LSTM(output_dim=256, activation='sigmoid', inner_activation='hard_sigmoid', return_sequences=True))
+    model.add(Dropout(0.5))
+    model.add(LSTM(output_dim=256, activation='sigmoid', inner_activation='hard_sigmoid'))
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='rmsprop',metrics=['accuracy'])
+    return model
 
 def run_validation(pred,obs,year,model):
     pred,obs = np.array(pred),np.array(obs)

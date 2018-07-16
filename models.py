@@ -221,7 +221,7 @@ def run_model_based_on_gp(Y, kt = "RQ", model="GPR", trw=27):
 #  LSTM model
 ###
 class LSTMPerDataPoint(object):
-    def __init__(self, y, reg_det, clf, dn, data, alt_win):
+    def __init__(self, y, reg_det, clf, dn, data, alt_win, look_back):
         self.y = y
         self.reg = reg_det[0]
         self.clf = clf
@@ -234,6 +234,7 @@ class LSTMPerDataPoint(object):
         self.fname = "out/det.%s.pred.%d.csv"%(self.model,self.trw)
         self.sclX = MinMaxScaler(feature_range=(0, 1))
         self.sclY = MinMaxScaler(feature_range=(0, 1))
+        self.look_back = look_back
         return
 
     def data_windowing(self, trw=None, isLW = False):
@@ -242,26 +243,38 @@ class LSTMPerDataPoint(object):
         _yparam = self.data[2]
         if trw is None: trw = self.trw
         _tstart = self.dn - dt.timedelta(days=trw) # training window start inclusive
-        _tend = self.dn - dt.timedelta(hours=3) # training window end inclusive
-        _o_train = _o[(_o["Date_WS"] >= _tstart) & (_o["Date_WS"] <= _tend)]
-        _o_test = _o[(_o["Date_WS"] == self._pred_point_time)]
-        if isLW: 
-            _o_train = self._o_train[self._o_train[_yparam] >= 4.5]
-            if  np.count_nonzero(_o_train.as_matrix(_xparams)) == 0: self._o_train = _o_train
-            pass
-        X_train,y_train = _o_train.as_matrix(_xparams), np.array(_o_train[_yparam]).reshape(len(_o_train),1)
-        X_test,y_test = _o_test.as_matrix(_xparams), np.array(_o_test[_yparam]).reshape(len(_o_test),1)
+        _tend = self.dn # training window end inclusive
+        _o_all = _o[(_o["Date_WS"] >= _tstart) & (_o["Date_WS"] <= _tend)]
+        if isLW: _o_all = _o_all[_o_all[_yparam] >= 4.5]
+        _o_test  = _o_all[_o_all["Date_WS"]==self.dn]
         T = False
-        if len(X_test) == 1:
-            self.X_train,self.y_train = self.txXY(X_train,y_train)
-            self.X_test,self.y_test = self.txXY(X_test,y_test)
+        if len(_o_test) == 1:
+            X,y = _o_all[_xparams].as_matrix(), _o_all[_yparam].as_matrix()
+            Xm,ym = self.txXY(X,y)
+            self.X_test, self.y_test = Xm[-1,:], ym[-1,0]
+            self.X_train, self.y_train  = Xm[:-1,:], ym[:-1,0].reshape((len(ym)-1,1))
+            self.X_train = np.reshape(self.X_train, (self.X_train.shape[0], 1, self.X_train.shape[2]))
+            self.y_obs = self.reY([[self.y_test]])[0,0]
+            self.X_test_lstm = np.reshape(self.X_test, (self.X_test.shape[0], 1, self.X_test.shape[1]))
+            print(self.X_train.shape,self.y_train.shape, self.X_test.shape)
+            T = True
             pass
         return T
+
+    def create_dataset(self,X,y, look_back=1):
+        dataX, dataY = [], []
+        for i in range(look_back+1,len(X)):
+            a = X[i-look_back:i, :]
+            dataX.append(a)
+            dataY.append(y[i].tolist())
+            pass
+        return np.array(dataX), np.array(dataY)
+    
 
     def txXY(self, X, y):
         Xs = self.sclX.fit_transform(X)
         ys = self.sclY.fit_transform(y)
-        Xm,ym = self.create_dataset(Xs,ys, look_back)
+        Xm,ym = self.create_dataset(Xs,ys,self.look_back)
         return Xm,ym
 
     def reY(self, y):
@@ -278,25 +291,23 @@ class LSTMPerDataPoint(object):
         clf = self.clf
         self._forecast_time = self.dn + dt.timedelta(hours = (mI*3))
         self._pred_point_time = self.dn # Time at which forecast is taking place
+        self.y_obs = -1
+        self.y_pred = -1
+        self.pr = -1
+        self.prt = prt
         if self.data_windowing():
             X_train,y_train = self.X_train,self.y_train
             X_test,y_test = self.X_test,self.y_test
-            self.y_obs = -1
-            self.y_pred = -1
-            self.pr = -1
-            self.prt = prt
             try:
-                self.y_obs = self.reY(y_test[0,0])
                 pr = clf.predict_proba(X_test)[0,0]
                 self.pr = pr
                 if pr > prt:
                     self.data_windowing(self.trw*self.alt_win, True)
                     X_train,y_train = self.X_train,self.y_train
-                    print(self.dn,pr)
                     pass
-                reg.fit(X_train, y_train)
-                if len(reg.predict(X_test).shape) == 2: self.y_pred = self.reY(reg.predict(X_test)[0,0])
-                else: self.y_pred = self.reY(reg.predict(X_test)[0])
+                reg.fit(X_train, y_train, batch_size = 2, epochs = 50, verbose = 0)
+                if len(reg.predict(self.X_test_lstm).shape) == 2: self.y_pred = self.reY(reg.predict(self.X_test_lstm)[0,0])[0,0]
+                else: self.y_pred = self.reY(reg.predict(self.X_test_lstm)[0])[0,0]
             except: 
                 print(self.dn)
                 traceback.print_exc()
@@ -310,12 +321,13 @@ class LSTMPerDataPoint(object):
 def run_lstm_model_per_date(details):
     y = details[0]
     reg_details = details[1]
+    look_back = reg_details[1]
     reg = util.get_lstm(ishape=reg_details[0],look_back=reg_details[1],trw=reg_details[2])
     clf = details[2]
     dn = details[3]
     data = details[4]
     alt_win = details[5]
-    th = LSTMPerDataPoint(y,reg,clf,dn,data,alt_win)
+    th = LSTMPerDataPoint(y,reg,clf,dn,data,alt_win,look_back)
     th.run()
     return
 
@@ -325,7 +337,7 @@ def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     f_clf = "out/rf.pkl"
     clf = util.get_best_determinsistic_classifier(f_clf)
     reg = (10,1,trw)
-    N = 1
+    N = 8*30*8
     _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
     print("-->Process for year:%d"%Y)
     years = [Y] * len(_dates)
