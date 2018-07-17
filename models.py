@@ -50,7 +50,7 @@ class ModelPerDataPoint(threading.Thread):
         self.mI = 1
         self.model = reg_det[1]
         self.alt_win = alt_win
-        self.fname = "out/det.%s.pred.%d.csv"%(self.model,self.trw)
+        self.fname = "out/det.%s.pred.%d.g.csv"%(self.model,self.trw)
         return
 
     def data_windowing(self, trw=None, isLW = False):
@@ -136,7 +136,8 @@ def run_model_per_year(details):
 ###
 def run_model_based_on_deterministic_algoritms(Y, model, trw=27):
     print("--> Loading data...")
-    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    #_o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    _o, _xparams, _yparam = db.load_data_with_goes_for_deterministic_reg()
     f_clf = "out/rf.pkl"
     clf = util.get_best_determinsistic_classifier(f_clf)
     reg = util.get_regressor(model, trw)

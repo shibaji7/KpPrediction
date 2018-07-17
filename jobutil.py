@@ -66,55 +66,56 @@ def build_lstm_classification(goes):
     X_resampled, y_resampled, idx_resampled = rus.fit_sample(X, y)
     X_train, X_test, y_train, y_test = train_test_split(X_resampled, y_resampled, test_size=1.0/3.0, random_state=42)
     clf = util.get_lstm_classifier(X.shape[1])
-    clf.fit(X_train, y_train, batch_size=64, nb_epoch=10, validation_split = 0.1, verbose = 1)
+    print clf
+#    clf.fit(X_train, y_train, batch_size=64, nb_epoch=10, validation_split = 0.1, verbose = 1)
     return
 
-def build_all_regressor():
-    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
-    _oh = _o[_o[_yparam[0]] >= 5.5]
-    _ol = _o[_o[_yparam[0]] <= 5.5]
-    Xh = _oh.as_matrix(_xparams)
-    Xl = _ol.as_matrix(_xparams)
-    yh = np.array(_oh[_yparam[0]].tolist()).reshape((len(_oh),1))
-    yl = np.array(_ol[_yparam[0]].tolist()).reshape((len(_ol),1))
-    f_clf = "out/rf.pkl"
-    clf = util.get_best_determinsistic_classifier(f_clf)
-    print("--> Classifier loaded..")
-    print(Xh.shape,yh.shape,Xl.shape,yl.shape)
-    Xh_train, Xh_test, yh_train, yh_test = train_test_split(Xh, yh, test_size=1.0/3.0, random_state=42)
-    Xl_train, Xl_test, yl_train, yl_test = train_test_split(Xl, yl, test_size=1.0/3.0, random_state=42)
-    prh = clf.predict_proba(Xh_test)[:,0]
-    prl = clf.predict_proba(Xl_test)[:,0]
-    y_obs = []
-    y_obs.extend(yh_test[:,0].tolist())
-    y_obs.extend(yl_test[:,0].tolist())
-    for r in regs:
-        yl_pred = []
-        yh_pred = []
-        y_pred = []
-        print("Model:"+r)
-        regO = util.get_regressor(r, 0)
-        regL = util.get_regressor(r, 0)
-        RL = regL[0]
-        RL.fit(Xl_train,yl_train)
-        RO = regO[0]
-        RO.fit(Xh_train,yh_train)
-        model = r
-        for I,p in enumerate(prh):
-            if p < .7: yh_pred.append(RL.predict(Xh_test[I,:].reshape((1,10))).ravel()[0])
-            else: yh_pred.append(RO.predict(Xh_test[I,:].reshape((1,10))).ravel()[0])
-            pass
-        for I,p in enumerate(prl):
-            if p < .7: yl_pred.append(RL.predict(Xl_test[I,:].reshape((1,10))).ravel()[0])
-            else: yl_pred.append(RO.predict(Xl_test[I,:].reshape((1,10))).ravel()[0])
-            pass
-        y_pred.extend(yh_pred)
-        y_pred.extend(yl_pred)
-        _eval_details = util.run_validation(y_pred,y_obs,"[1995-2016]",model)
-        print _eval_details
-        #break
-        pass
-    return
+#def build_all_regressor():
+#    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+#    _oh = _o[_o[_yparam[0]] >= 5.5]
+#    _ol = _o[_o[_yparam[0]] <= 5.5]
+#    Xh = _oh.as_matrix(_xparams)
+#    Xl = _ol.as_matrix(_xparams)
+#    yh = np.array(_oh[_yparam[0]].tolist()).reshape((len(_oh),1))
+#    yl = np.array(_ol[_yparam[0]].tolist()).reshape((len(_ol),1))
+#    f_clf = "out/rf.pkl"
+#    clf = util.get_best_determinsistic_classifier(f_clf)
+#    print("--> Classifier loaded..")
+#    print(Xh.shape,yh.shape,Xl.shape,yl.shape)
+#    Xh_train, Xh_test, yh_train, yh_test = train_test_split(Xh, yh, test_size=1.0/3.0, random_state=42)
+#    Xl_train, Xl_test, yl_train, yl_test = train_test_split(Xl, yl, test_size=1.0/3.0, random_state=42)
+#    prh = clf.predict_proba(Xh_test)[:,0]
+#    prl = clf.predict_proba(Xl_test)[:,0]
+#    y_obs = []
+#    y_obs.extend(yh_test[:,0].tolist())
+#    y_obs.extend(yl_test[:,0].tolist())
+#    for r in regs:
+#        yl_pred = []
+#        yh_pred = []
+#        y_pred = []
+#        print("Model:"+r)
+#        regO = util.get_regressor(r, 0)
+#        regL = util.get_regressor(r, 0)
+#        RL = regL[0]
+#        RL.fit(Xl_train,yl_train)
+#        RO = regO[0]
+#        RO.fit(Xh_train,yh_train)
+#        model = r
+#        for I,p in enumerate(prh):
+#            if p < .7: yh_pred.append(RL.predict(Xh_test[I,:].reshape((1,10))).ravel()[0])
+#            else: yh_pred.append(RO.predict(Xh_test[I,:].reshape((1,10))).ravel()[0])
+#            pass
+#        for I,p in enumerate(prl):
+#            if p < .7: yl_pred.append(RL.predict(Xl_test[I,:].reshape((1,10))).ravel()[0])
+#            else: yl_pred.append(RO.predict(Xl_test[I,:].reshape((1,10))).ravel()[0])
+#            pass
+#        y_pred.extend(yh_pred)
+#        y_pred.extend(yl_pred)
+#        _eval_details = util.run_validation(y_pred,y_obs,"[1995-2016]",model)
+#        print _eval_details
+#        #break
+#        pass
+#    return
 
 def run_deterministic_clf_reg_model(args):
     if len(args) == 0: print "python jobutil.py 2 <reg model> <trw> <year>(1995-2016)"
@@ -178,6 +179,14 @@ def run_model_stats(args):
         util.get_stats(model, trw)
     return
 
+def run_tss_plot(args):
+    if len(args) == 0: print "python jobutil.py 6 <reg model> <trw>"
+    else:
+        model = args[0]
+        trw = int(args[1])
+        util.run_for_TSS(model, trw)
+    return
+
 
 if __name__ == "__main__":
     args = sys.argv[1:]
@@ -190,6 +199,7 @@ if __name__ == "__main__":
         if ctx == 4: run_model_stats(args[1:])
         if ctx == 5: run_lstm_clf_reg_model(args[1:])
         if ctx == 9: build_lstm_classification(args[1])
+        if ctx == 6: run_tss_plot(args[1:])
         pass
     pass
     

@@ -251,6 +251,7 @@ def get_best_determinsistic_classifier(f_clf):
 
 def get_stats(model, trw):
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
+    #fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
     _o = pd.read_csv(fname)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
     y_pred = _o.y_pred.tolist()
@@ -258,7 +259,7 @@ def get_stats(model, trw):
     _eval_details =  run_validation(y_pred,y_obs,"[1995-2016]",model)
     print _eval_details 
     splot.style("spacepy")
-    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,10))
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(6,6))
     ax.plot(y_pred,y_obs,"k.")
     strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
     ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
@@ -266,3 +267,41 @@ def get_stats(model, trw):
     ax.set_ylabel(r"$K_{P_{obs}}$")
     fig.savefig("out/stat/det.%s.pred.%d.png"%(model,trw))
     return
+
+
+def run_for_TSS(model, trw):
+    fdummy = "out/det.dummy.pred.%d.csv"%(trw)
+    fname = "out/det.%s.pred.%d.csv"%(model,trw)
+    _od = pd.read_csv(fdummy)
+    _o = pd.read_csv(fname)
+    _od = _od[(_od.prob_clsf != -1.) & (_od.y_pred != -1.) & (_od.y_pred >= 0) & (_od.y_pred <= 9.)]
+    _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
+    _od.dn = pd.to_datetime(_od.dn)
+    _o.dn = pd.to_datetime(_o.dn)
+
+    stime = dt.datetime(1995,1,1)
+    etime = dt.datetime(2017,1,1)
+    d = stime
+    skill = []
+    t = []
+    while(d < etime):
+        print(d)
+        t.append(d)
+        dn = d + dt.timedelta(days=27)
+        dum = _od[(_od.dn >= d) & (_od.dn < dn)]
+        mod = _o[(_o.dn >= d) & (_o.dn < dn)]
+        rmse_dum = verify.RMSE(_od.y_pred,_od.y_obs)
+        rmse = verify.RMSE(_o.y_pred,_o.y_obs)
+        skill.append(verify.skill(rmse, rmse_dum))
+        d = dn
+        pass
+    fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
+    splot.style("spacepy")
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    ax.xaxis.set_major_formatter(fmt)
+    ax.plot(t,skill,"k.")
+    #strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
+    #ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
+    ax.set_ylabel(r"$TSS$")
+    ax.set_xlabel(r"$Time$")
+    fig.savefig("out/stat/det.%s.tss.%d.png"%(model,trw)) 
