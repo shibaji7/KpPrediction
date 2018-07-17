@@ -264,7 +264,7 @@ def get_best_determinsistic_classifier(f_clf):
 
 def get_stats(model, trw):
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
-    #fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
+    fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
     _o = pd.read_csv(fname)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
     y_pred = _o.y_pred.tolist()
@@ -301,15 +301,17 @@ def run_for_TSS(model, trw):
     skill = []
     t = []
     while(d < etime):
-        t.append(d)
-        dn = d + dt.timedelta(days=27)
-        dum = _od[(_od.dn >= d) & (_od.dn < dn)]
-        mod = _o[(_o.dn >= d) & (_o.dn < dn)]
-        rmse_dum = verify.RMSE(dum.y_pred,dum.y_obs)
-        rmse = verify.RMSE(mod.y_pred,mod.y_obs)
-        print(d,rmse,rmse_dum,verify.skill(rmse, rmse_dum))
-        skill.append(verify.skill(rmse, rmse_dum))
-        d = d + dt.timedelta(days=1)
+        try:
+            t.append(d)
+            dn = d + dt.timedelta(days=27)
+            dum = _od[(_od.dn >= d) & (_od.dn < dn)]
+            mod = _o[(_o.dn >= d) & (_o.dn < dn)]
+            rmse_dum = verify.RMSE(dum.y_pred,dum.y_obs)
+            rmse = verify.RMSE(mod.y_pred,mod.y_obs)
+            print(d,rmse,rmse_dum,verify.skill(rmse, rmse_dum))
+            skill.append(verify.skill(rmse, rmse_dum))
+            d = d + dt.timedelta(days=1)
+        except: pass
         pass
     fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
     splot.style("spacepy")
