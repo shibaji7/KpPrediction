@@ -321,13 +321,13 @@ def run_for_TSS(model, trw):
         except: pass
         pass
     skill = np.array(skill)
-    skill = nan_helper(skill)
+    #skill = nan_helper(skill)
     fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
     splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     ax.xaxis.set_major_formatter(fmt)
     ax.plot(t,skill,"k.",label="")
-    ax.plot(t,smooth(np.array(skill),101),"r.")
+    #ax.plot(t,smooth(np.array(skill),101),"r.")
     #strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
     #ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_ylabel(r"$TSS(\%)$")
