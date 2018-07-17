@@ -285,13 +285,13 @@ def run_for_TSS(model, trw):
     skill = []
     t = []
     while(d < etime):
-        print(d)
         t.append(d)
         dn = d + dt.timedelta(days=27)
         dum = _od[(_od.dn >= d) & (_od.dn < dn)]
         mod = _o[(_o.dn >= d) & (_o.dn < dn)]
-        rmse_dum = verify.RMSE(_od.y_pred,_od.y_obs)
-        rmse = verify.RMSE(_o.y_pred,_o.y_obs)
+        rmse_dum = verify.RMSE(dum.y_pred,dum.y_obs)
+        rmse = verify.RMSE(mod.y_pred,mod.y_obs)
+        print(d,rmse,rmse_dum,verify.skill(rmse, rmse_dum))
         skill.append(verify.skill(rmse, rmse_dum))
         d = dn
         pass
