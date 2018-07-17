@@ -274,9 +274,11 @@ def get_stats(model, trw):
     splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(6,6))
     ax.plot(y_pred,y_obs,"k.")
-    strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
-    ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
+    strx = "RMSE=%.2f\nr=%.2f"%(_eval_details["RMSE"],_eval_details["r"])
+    ax.text(0.2,0.95,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_xlabel(r"$K_{P_{pred}}$")
+    ax.set_xlim(0,9)
+    ax.set_ylim(0,9)
     ax.set_ylabel(r"$K_{P_{obs}}$")
     fig.savefig("out/stat/det.%s.pred.%d.png"%(model,trw))
     return
