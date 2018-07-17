@@ -10,6 +10,7 @@ import datetime as dt
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy.interpolate import interp1d
 import math
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
@@ -52,7 +53,8 @@ from keras.layers import Dense,LSTM,Embedding,Dropout
 def nan_helper(y):
     nans = np.isnan(y)
     x = lambda z: z.nonzero()[0]
-    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    f = interp1d(x(~nans), y[~nans], kind="cubic")
+    y[nans] = f(x(nans))
     return y
 
 def smooth(x,window_len=51,window="hanning"):
@@ -300,8 +302,8 @@ def run_for_TSS(model, trw):
     _od.dn = pd.to_datetime(_od.dn)
     _o.dn = pd.to_datetime(_o.dn)
 
-    stime = dt.datetime(1995,1,1)
-    etime = dt.datetime(2017,1,1)
+    stime = dt.datetime(1995,2,1)
+    etime = dt.datetime(2016,9,20)
     d = stime
     skill = []
     t = []
@@ -330,6 +332,6 @@ def run_for_TSS(model, trw):
     #ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_ylabel(r"$TSS(\%)$")
     ax.set_xlabel(r"$Time$")
-    ax.set_xlim(stime, etime)
+    ax.set_xlim(dt.datetime(1995,1,1), dt.datetime(2017,1,1))
     #ax.set_ylim(0,100)
     fig.savefig("out/stat/det.%s.tss.%d.png"%(model,trw)) 
