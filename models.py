@@ -351,3 +351,27 @@ def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     date_pool = Pool(10)
     date_pool.map(run_lstm_model_per_date, _a)
     return
+
+##
+# Deep GP
+##
+
+def run_model_based_on_deepgp(Y, model="deepGP", trw=27):
+    print("--> Loading data...")
+    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    f_clf = "out/rf.pkl"
+    clf = util.get_best_determinsistic_classifier(f_clf)
+    reg = (10,1,trw)
+    N = 8*30*8
+    _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
+    print("-->Process for year:%d"%Y)
+    years = [Y] * len(_dates)
+    regs = [reg] * len(_dates)
+    clfs = [clf] * len(_dates)
+    alt_wins = [36] * len(_dates)
+    data_array = [(_o, _xparams, _yparam)] * len(_dates)
+    _a = []
+    for x,y,z,dn,k,aw in zip(years, regs, clfs, _dates, data_array, alt_wins): _a.append((x,y,z,dn,k,aw))
+    date_pool = Pool(10)
+    date_pool.map(run_lstm_model_per_date, _a)
+    return
