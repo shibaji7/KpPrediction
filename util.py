@@ -49,6 +49,11 @@ from verify import Contingency2x2
 from keras.models import Sequential
 from keras.layers import Dense,LSTM,Embedding,Dropout
 
+def nan_helper(y):
+    nans = np.isnan(y)
+    x = lambda z: z.nonzero()[0]
+    y[nans] = np.interp(x(nans), x(~nans), y[~nans])
+    return y
 
 def smooth(x,window_len=51,window="hanning"):
     if x.ndim != 1: raise ValueError, "smooth only accepts 1 dimension arrays."
@@ -313,6 +318,8 @@ def run_for_TSS(model, trw):
             d = d + dt.timedelta(days=1)
         except: pass
         pass
+    skill = np.array(skill)
+    skill = nan_helper(skill)
     fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
     splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
