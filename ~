@@ -50,19 +50,6 @@ from keras.models import Sequential
 from keras.layers import Dense,LSTM,Embedding,Dropout
 
 
-def smooth(x,window_len=51,window="hanning"):
-    if x.ndim != 1: raise ValueError, "smooth only accepts 1 dimension arrays."
-    if x.size < window_len: raise ValueError, "Input vector needs to be bigger than window size."
-    if window_len<3: return x
-    if not window in ["flat", "hanning", "hamming", "bartlett", "blackman"]: raise ValueError, "Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'"
-    s = np.r_[x[window_len-1:0:-1],x,x[-2:-window_len-1:-1]]
-    if window == "flat": w = numpy.ones(window_len,"d")
-    else: w = eval("np."+window+"(window_len)")
-    y = np.convolve(w/w.sum(),s,mode="valid")
-    d = window_len - 1
-    y = y[d/2:-d/2]
-    return y
-
 def get_classifiers():
     # basic classifires
     dc = DummyClassifier(random_state=0)
@@ -313,7 +300,6 @@ def run_for_TSS(model, trw):
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     ax.xaxis.set_major_formatter(fmt)
     ax.plot(t,skill,"k.")
-    ax.plot(t,smooth(np.array(skill)),"r-.")
     #strx = "RMSE:%.2f\nr:%.2f"%(_eval_details["RMSE"],_eval_details["r"])
     #ax.text(0.2,0.8,strx,horizontalalignment='center',verticalalignment='center', transform=ax.transAxes)
     ax.set_ylabel(r"$TSS$")
