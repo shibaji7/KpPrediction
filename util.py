@@ -293,7 +293,7 @@ def run_for_TSS(model, trw):
         rmse = verify.RMSE(mod.y_pred,mod.y_obs)
         print(d,rmse,rmse_dum,verify.skill(rmse, rmse_dum))
         skill.append(verify.skill(rmse, rmse_dum))
-        d = dn
+        d = d + dt.timedelta(days=1)
         pass
     fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
     splot.style("spacepy")
