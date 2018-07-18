@@ -271,7 +271,7 @@ def get_best_determinsistic_classifier(f_clf):
 
 def get_stats(model, trw):
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
-    fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
+    #fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
     _o = pd.read_csv(fname)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
     y_pred = _o.y_pred.tolist()

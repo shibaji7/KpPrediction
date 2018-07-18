@@ -171,6 +171,21 @@ def run_lstm_clf_reg_model(args):
         pass
     return
 
+def run_lstmgp_clf_reg_model(args):
+    if len(args) == 0: print "python jobutil.py 7 deepGP <trw> <year>(1995-2016)"
+    else:
+        model = args[0]
+        trw = int(args[1])
+        if args[2] == "all":
+            for y in range(1995,2017): M.run_model_based_on_deepgp(y, model="deepGP", trw = trw)
+            pass
+        else:
+            y = int(args[2])
+            M.run_model_based_on_deepgp(y, model="deepGP", trw = trw)
+        pass
+    return
+
+
 def run_model_stats(args):
     if len(args) == 0: print "python jobutil.py 4 <reg model> <trw>"
     else:
@@ -198,6 +213,7 @@ if __name__ == "__main__":
         if ctx == 3: run_gp_clf_reg_model(args[1:])
         if ctx == 4: run_model_stats(args[1:])
         if ctx == 5: run_lstm_clf_reg_model(args[1:])
+        if ctx == 7: run_lstmgp_clf_reg_model(args[1:])
         if ctx == 9: build_lstm_classification(args[1])
         if ctx == 6: run_tss_plot(args[1:])
         pass
