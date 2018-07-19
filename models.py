@@ -252,7 +252,7 @@ class LSTMPerDataPoint(object):
         self.mI = 1
         self.model = reg_det[1]
         self.alt_win = alt_win
-        self.fname = "out/det.%s.pred.%d.csv"%(self.model,self.trw)
+        self.fname = "out/det.%s.pred.%d.g.csv"%(self.model,self.trw)
         self.sclX = MinMaxScaler(feature_range=(0, 1))
         self.sclY = MinMaxScaler(feature_range=(0, 1))
         self.look_back = look_back
@@ -262,6 +262,7 @@ class LSTMPerDataPoint(object):
         _o = self.data[0]
         _xparams = self.data[1]
         _yparam = self.data[2]
+        print self.trw
         if trw is None: trw = self.trw
         _tstart = self.dn - dt.timedelta(days=trw) # training window start inclusive
         _tend = self.dn # training window end inclusive
@@ -274,9 +275,10 @@ class LSTMPerDataPoint(object):
             Xm,ym = self.txXY(X,y)
             self.X_test, self.y_test = Xm[-1,:], ym[-1,0]
             self.X_train, self.y_train  = Xm[:-1,:], ym[:-1,0].reshape((len(ym)-1,1))
-            self.X_train = np.reshape(self.X_train, (self.X_train.shape[0], 1, self.X_train.shape[2]))
+            self.X_train = np.reshape(self.X_train, (self.X_train.shape[0], self.look_back, self.X_train.shape[2]))
             self.y_obs = self.reY([[self.y_test]])[0,0]
-            self.X_test_lstm = np.reshape(self.X_test, (self.X_test.shape[0], 1, self.X_test.shape[1]))
+            #print(self.X_test.shape)
+            self.X_test_lstm = np.reshape(self.X_test, (1, self.look_back, self.X_test.shape[1]))
             print(self.X_train.shape,self.y_train.shape, self.X_test.shape)
             T = True
             pass
@@ -319,8 +321,9 @@ class LSTMPerDataPoint(object):
         if self.data_windowing():
             X_train,y_train = self.X_train,self.y_train
             X_test,y_test = self.X_test,self.y_test
+            print(X_test[:,:-4].shape)
             try:
-                pr = clf.predict_proba(X_test)[0,0]
+                pr = clf.predict_proba(X_test[:,:-4])[0,0]
                 self.pr = pr
                 if pr > prt:
                     self.data_windowing(self.trw*self.alt_win, True)
@@ -336,6 +339,7 @@ class LSTMPerDataPoint(object):
         else: pass
         print(self.y_obs,self.y_pred)
         store_prediction_to_file(self.fname,self.dn,self.y_obs,self.y_pred,self.pr,self.prt,self.model)
+        print("Done")
         return
 
 
@@ -354,11 +358,14 @@ def run_lstm_model_per_date(details):
 
 def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     print("--> Loading data...")
-    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    #_o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    _o, _xparams, _yparam = db.load_data_with_goes_for_deterministic_reg()
     f_clf = "out/rf.pkl"
     clf = util.get_best_determinsistic_classifier(f_clf)
     reg = (10,1,trw)
+    reg = (14,10,trw)
     N = 8*30*8
+    #N = 1
     _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
     print("-->Process for year:%d"%Y)
     years = [Y] * len(_dates)

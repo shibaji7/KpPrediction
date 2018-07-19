@@ -91,11 +91,11 @@ def main():
     model.compile(optimizer=Adam(1e-2), loss=loss)
 
     # Callbacks
-    callbacks = [EarlyStopping(monitor='val_mse', patience=10)]
+    callbacks = [EarlyStopping(monitor='mse', patience=10)]
 
     # Train the model
     history = train(model, data, callbacks=callbacks, gp_n_iter=5,
-                    checkpoint='lstm', checkpoint_monitor='val_mse',
+                    checkpoint='lstm', checkpoint_monitor='mse',
                     epochs=epochs, batch_size=batch_size, verbose=2)
 
     # Finetune the model

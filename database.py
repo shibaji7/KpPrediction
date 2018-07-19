@@ -274,6 +274,7 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
         _goes_bs = []
         for I,rec in _o.iterrows():
             now = rec["sdates"]
+            print now
             FC_time = now + dt.timedelta(hours=delay)
             delay_time.append(FC_time)
             future_kp = _k[_k.dates == FC_time]
@@ -300,13 +301,13 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
         _o["Kp"] = _kp
         _o["delay_time"] = delay_time
         dkp_tx = do_transform_Kp2lin(_dkp)
+        _o["_dkp_lt"] = dkp_tx
+        _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
+        _o = transform_variables(_o)
         _o["_a_max"] = _goes_am
         _o["_b_max"] = _goes_bm
         _o["_a_std"] = _goes_as
         _o["_b_std"] = _goes_bs
-        _o["_dkp_lt"] = dkp_tx
-        _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
-        _o = transform_variables(_o)
         _o.to_csv(fname, index=False, header=True)
         pass
     else:

@@ -195,7 +195,8 @@ def get_gpr(kernel_type, hyp, nrst = 10, trw=27):
 
 def get_lstm(ishape,look_back=1, trw = 27):
     model = Sequential()
-    model.add(LSTM(4, input_shape=(look_back, ishape)))
+    model.add(LSTM(10, input_shape=(look_back, ishape)))
+    model.add(Dense(1))
     model.add(Dense(1))
     model.compile(loss='mean_squared_error', optimizer='rmsprop')
     return (model, "LSTM", trw)
@@ -271,7 +272,8 @@ def get_best_determinsistic_classifier(f_clf):
 
 def get_stats(model, trw):
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
-    #fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
+    fname = "out/det.%s.pred.%d.g.csv"%(model,trw)
+    print(fname)
     _o = pd.read_csv(fname)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
     y_pred = _o.y_pred.tolist()
