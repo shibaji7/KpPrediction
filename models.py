@@ -383,8 +383,8 @@ def build_lstmgp(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_s
     }
     gp_params = {
         'cov': 'SEiso',
-        'hyp_lik': -2.0,
-        'hyp_cov': [[-0.7], [0.0]],
+        'hyp_lik': -1.0,
+        'hyp_cov': [[1.], [0.0]],
         'opt': {},
     }
 
@@ -403,7 +403,37 @@ def build_lstmgp(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_s
     loss = [gen_gp_loss(gp) for gp in model.output_gp_layers]
     model.compile(optimizer=Adam(1e-2), loss=loss)
 
-    return model 
+    return model
+
+def build_lstmgp(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_samples):
+    nn_params = {
+            'H_dim': 16,
+            'H_activation': 'tanh',
+            'dropout': 0.1,
+            }
+    gp_params = {
+            'cov': 'RQiso',
+            'hyp_lik': -1.0,
+            'hyp_cov': [[1.],[1.], [0.0]],
+            'opt': {},
+            }
+    
+    nn_configs = load_NN_configs(filename='lstm.yaml',
+            input_shape=input_shape,
+            output_shape=gp_input_shape,
+            params=nn_params)
+    gp_configs = load_GP_configs(filename='gp.yaml',
+            nb_outputs=nb_outputs,
+            batch_size=batch_size,
+            nb_train_samples=nb_train_samples,
+            params=gp_params)
+    
+    # Construct & compile the model
+    model = assemble('GP-LSTM', [nn_configs['2H'], gp_configs['GP']])
+    loss = [gen_gp_loss(gp) for gp in model.output_gp_layers]
+    model.compile(optimizer=Adam(1e-2), loss=loss)
+    
+    return model
 
 
 class DeepGPPerDataPoint(object):
@@ -513,7 +543,7 @@ class DeepGPPerDataPoint(object):
                 # Train the model
                 history = train(self.reg, self.DD, callbacks=callbacks, gp_n_iter=5,
                     checkpoint='lstm', checkpoint_monitor='mse',
-                    epochs=self.epochs, batch_size=self.batch_size, verbose=2)
+                    epochs=self.epochs, batch_size=self.batch_size, verbose=0)
                 
                 # Finetune the model
                 self.reg.finetune(*self.DD['train'],batch_size=self.batch_size, gp_n_iter=100, verbose=0)
@@ -552,7 +582,8 @@ def run_model_based_on_deepgp(Y, model="deepGP", trw=27):
     clf = util.get_best_determinsistic_classifier(f_clf)
     reg = (10,1,trw)
     N = 8*30*2
-    _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
+    #N = 1
+    _dates = [dt.datetime(Y,8,26) + dt.timedelta(hours=i*3) for i in range(N)]
     print("-->Process for year:%d"%Y)
     years = [Y] * len(_dates)
     regs = [reg] * len(_dates)

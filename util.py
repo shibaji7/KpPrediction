@@ -4,7 +4,7 @@
 
 import os
 import matplotlib
-matplotlib.use("Agg")
+#matplotlib.use("Agg")
 matplotlib.rcParams['agg.path.chunksize'] = 10000
 import datetime as dt
 import numpy as np
@@ -335,3 +335,27 @@ def run_for_TSS(model, trw):
     ax.set_xlim(dt.datetime(1995,1,1), dt.datetime(2017,1,1))
     ax.set_ylim(0,100)
     fig.savefig("out/stat/det.%s.tss.%d.png"%(model,trw)) 
+
+def plot_modified(trw):
+    fname = "out/det.deepGP.pred.%d.csv"%(trw)
+    _o = pd.read_csv(fname)
+    _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
+    _o.dn = pd.to_datetime(_o.dn)
+    _o = _o[(_o.dn>=dt.datetime(2004,7,1)) & (_o.dn<dt.datetime(2004,9,1))]
+    sigma = 1.1*np.abs(np.array(_o.y_pred)-np.array(_o.lb))
+    fmt = matplotlib.dates.DateFormatter("%d %b\n%Y")
+    splot.style("spacepy")
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    ax.xaxis.set_major_formatter(fmt)
+    ax.plot(_o.dn, _o.y_obs,"ro",markersize=10,label=r"$K_{P_{obs}}$")
+    ax.plot(_o.dn, _o.y_pred, 'bo', markersize=5, label=r"$K_{P_{pred}}$")
+    ax.set_xlim(dt.datetime(2004,7,1), dt.datetime(2004,9,1))
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]), np.concatenate([np.array(_o.y_pred) - 0.674 * sigma,
+        (np.array(_o.y_pred) + 0.674 * sigma)[::-1]]),alpha=.6, fc='b', ec='None', label=r"$CI=50\%$")
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]), np.concatenate([np.array(_o.y_pred) - 1.9600 * sigma,
+        (np.array(_o.y_pred) + 1.9600 * sigma)[::-1]]), alpha=.4, fc='b', ec='None', label=r"$CI=95\%$")
+    ax.legend(loc='upper left')
+    plt.show()
+    return
+
+plot_modified(7)

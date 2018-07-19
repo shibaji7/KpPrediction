@@ -16,6 +16,7 @@ import util
 import models as M
 
 np.random.seed(7)
+os.system("module2 load matlab")
 
 def build_all_classifiers(goes):
     # Dataset
