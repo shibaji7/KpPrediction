@@ -423,7 +423,7 @@ def proba_storm_forcast(model,trw):
     for m,s,d in zip(y_pred, sigma,_o.dn.tolist()):
         pr = np.round((1 - norm.cdf(4.5, m, s))*100,2)
         if pr > 30.: ax.text(d,12.5,str(pr)+"%",rotation=90)
-        markerline, stemlines, baseline = ax0.stem([d], [m],color=cmap(pr))
+        markerline, stemlines, baseline = ax0.stem([d], [m],c=cmap(pr))
         pass
     ax.set_ylim(-2,15)
     fig.savefig("out/stat/det.pred.%s.%d.forecast.png"%(model,trw),bbox_inches="tight")
