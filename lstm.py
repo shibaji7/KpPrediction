@@ -25,7 +25,7 @@ def create_model(input_length):
     return model
 
 def get_data():
-    _xparams, X, y = db.load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y=2017)
+    _xparams, X, y = db.load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = True, y=2017)
     print _xparams
     y = np.asarray(y[:,0].tolist())
     sclX = MinMaxScaler(feature_range=(0, 1))
@@ -66,4 +66,4 @@ if xx:
     plt.xlim(0,1)
     plt.ylim(0,1)
     #plt.show()
-    plt.savefig("out/stat/keras.roc.fr.png")
+    plt.savefig("out/stat/keras.roc.png")
