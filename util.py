@@ -14,6 +14,7 @@ from scipy.interpolate import interp1d
 import math
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
+from scipy.stats import norm
 
 np.random.seed(7)
 import database as db
@@ -376,6 +377,8 @@ plot_pred("deepGP",27)
 
 
 def proba_storm_forcast(model,trw):
+    import matplotlib.gridspec as gridspec
+    spec = gridspec.GridSpec(ncols=1, nrows=10)
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
     matplotlib.rcParams['xtick.labelsize'] = 10 
     print(fname)
@@ -388,7 +391,11 @@ def proba_storm_forcast(model,trw):
     y_obs = np.array(_o.y_obs.tolist())
     sigma = 3 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
     splot.style("spacepy")
-    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    fig = plt.figure(figsize=(10,6))
+    #fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    ax = fig.add_subplot(spec[0, 0])
+    markerline, stemlines, baseline = ax.stem(_o.dn, y_pred, '-.')
+    ax = fig.add_subplot(spec[1:, 0])
     fmt = matplotlib.dates.DateFormatter("%m-%d")
     ax.xaxis.set_major_formatter(fmt)
     ax.plot(_o.dn,y_obs,"ro",markersize=5,label=r"$K_{P_{obs}}$",alpha=0.6)
@@ -404,15 +411,13 @@ def proba_storm_forcast(model,trw):
     ax.plot(_o.dn,4.5*np.ones(len(_o)),"k-.",markersize=3,label=r"$K_{P_{G_0}}$")
     ax.set_ylabel(r"$K_{P_{pred}}$")
     ax.set_xlabel(r"$UT$")
-    ax.legend(loc="upper left")
+    #ax.legend(loc="upper left")
     ax.tick_params(axis="both",which="major",labelsize="15")
     ax.set_xlim(dt.datetime(2004,7,22), dt.datetime(2004,7,28))
     for m,s,d in zip(y_pred, sigma,_o.dn.tolist()):
-        dd = [d, d+dt.timedelta(hours=3)]
-        vv = [14,15]
-        ax.fill(np.concatenate([dd, dd[::-1]]),
-         np.concatenate([vv,(vv)[::-1]]),
-         alpha=.7, fc='b', ec='None',)
+        pr = np.round((1 - norm.cdf(4.5, m, s))*100,2)
+        if pr > 30.:
+            ax.text(d,15,str(pr)+"%",rotation=90)
         pass
     ax.set_ylim(-2,15)
     fig.savefig("out/stat/det.pred.%s.%d.forecast.png"%(model,trw),bbox_inches="tight")
