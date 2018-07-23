@@ -375,7 +375,7 @@ def run_model_based_on_lstm(Y, model="LSTM", trw=27):
     data_array = [(_o, _xparams, _yparam)] * len(_dates)
     _a = []
     for x,y,z,dn,k,aw in zip(years, regs, clfs, _dates, data_array, alt_wins): _a.append((x,y,z,dn,k,aw))
-    date_pool = Pool(10)
+    date_pool = Pool(4)
     date_pool.map(run_lstm_model_per_date, _a)
     return
 
@@ -390,8 +390,8 @@ def build_lstmgp(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_s
     }
     gp_params = {
         'cov': 'SEiso',
-        'hyp_lik': -2.0,
-        'hyp_cov': [[-0.7], [0.0]],
+        'hyp_lik': -1.0,
+        'hyp_cov': [[1.], [0.0]],
         'opt': {},
     }
 
@@ -410,7 +410,37 @@ def build_lstmgp(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_s
     loss = [gen_gp_loss(gp) for gp in model.output_gp_layers]
     model.compile(optimizer=Adam(1e-2), loss=loss)
 
-    return model 
+    return model
+
+def build_lstmgpt(input_shape, gp_input_shape, nb_outputs, batch_size, nb_train_samples):
+    nn_params = {
+            'H_dim': 16,
+            'H_activation': 'tanh',
+            'dropout': 0.1,
+            }
+    gp_params = {
+            'cov': 'RQiso',
+            'hyp_lik': -1.0,
+            'hyp_cov': [[1.],[1.], [0.0]],
+            'opt': {},
+            }
+    
+    nn_configs = load_NN_configs(filename='lstm.yaml',
+            input_shape=input_shape,
+            output_shape=gp_input_shape,
+            params=nn_params)
+    gp_configs = load_GP_configs(filename='gp.yaml',
+            nb_outputs=nb_outputs,
+            batch_size=batch_size,
+            nb_train_samples=nb_train_samples,
+            params=gp_params)
+    
+    # Construct & compile the model
+    model = assemble('GP-LSTM', [nn_configs['2H'], gp_configs['GP']])
+    loss = [gen_gp_loss(gp) for gp in model.output_gp_layers]
+    model.compile(optimizer=Adam(1e-2), loss=loss)
+    
+    return model
 
 
 class DeepGPPerDataPoint(object):
@@ -425,6 +455,7 @@ class DeepGPPerDataPoint(object):
         self.model = "deepGP"
         self.alt_win = alt_win
         self.fname = "out/det.%s.pred.%d.csv"%(self.model,self.trw)
+        print self.fname
         self.sclX = MinMaxScaler(feature_range=(0, 1))
         self.sclY = MinMaxScaler(feature_range=(0, 1))
         self.look_back = look_back
@@ -444,11 +475,13 @@ class DeepGPPerDataPoint(object):
         if len(_o_test) == 1:
             X,y = _o_all[_xparams].as_matrix(), _o_all[_yparam].as_matrix()
             Xm,ym = self.txXY(X,y)
+            print(Xm.shape,ym.shape)
             self.X_test, self.y_test = Xm[-1,:], ym[-1,0]
+            print(Xm.shape,ym.shape)
             self.X_train, self.y_train  = Xm[:-1,:], ym[:-1,0].reshape((len(ym)-1,1))
-            self.X_train = np.reshape(self.X_train, (self.X_train.shape[0], 1, self.X_train.shape[2]))
+            self.X_train = np.reshape(self.X_train, (self.X_train.shape[0], self.look_back, self.X_train.shape[2]))
             self.y_obs = self.reY([[self.y_test]])[0,0]
-            self.X_test_lstm = np.reshape(self.X_test, (self.X_test.shape[0], 1, self.X_test.shape[1]))
+            self.X_test_lstm = np.reshape(self.X_test, (1, self.look_back, self.X_test.shape[1]))
             self.DD = {
                 'train': [self.X_train, np.reshape(self.y_train, (len(self.y_train),1,1))],
                 'test': [self.X_test_lstm, np.reshape(self.y_test, (1,1,1))],
@@ -493,7 +526,7 @@ class DeepGPPerDataPoint(object):
         return y
 
     def run(self):
-        prt = 0.7
+        prt = 0.5
         print("-->Process for date:%s"%self.dn)
         _xparams = self.data[1]
         _yparam = self.data[2]
@@ -511,7 +544,7 @@ class DeepGPPerDataPoint(object):
         if self.data_windowing():
             X_test,y_test = self.X_test,self.y_test
             try:
-                pr = clf.predict_proba(X_test)[0,0]
+                pr = clf.predict_proba(X_test[:,:-4])[0,0]
                 self.pr = pr
                 if pr > prt: self.data_windowing(self.trw*self.alt_win, True)
                 # Callbacks
@@ -520,7 +553,7 @@ class DeepGPPerDataPoint(object):
                 # Train the model
                 history = train(self.reg, self.DD, callbacks=callbacks, gp_n_iter=5,
                     checkpoint='lstm', checkpoint_monitor='mse',
-                    epochs=self.epochs, batch_size=self.batch_size, verbose=2)
+                    epochs=self.epochs, batch_size=self.batch_size, verbose=0)
                 
                 # Finetune the model
                 self.reg.finetune(*self.DD['train'],batch_size=self.batch_size, gp_n_iter=100, verbose=0)
@@ -552,14 +585,19 @@ def run_deepgp_model_per_date(details):
     th.run()
     return
 
-def run_model_based_on_deepgp(Y, model="deepGP", trw=27):
+def run_model_based_on_deepgp(Y, model="deepGP", trw=27, i=0):
     print("--> Loading data...")
-    _o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    #_o, _xparams, _yparam = db.load_data_for_deterministic_reg()
+    _o, _xparams, _yparam = db.load_data_with_goes_for_deterministic_reg()
     f_clf = "out/rf.pkl"
     clf = util.get_best_determinsistic_classifier(f_clf)
-    reg = (10,1,trw)
+    print trw
+    reg = (14,1,trw)
     N = 8*30*2
-    _dates = [dt.datetime(Y,2,1) + dt.timedelta(hours=i*3) for i in range(N)]
+    #N = 1
+    #_dates = [dt.datetime(Y,7,1) + dt.timedelta(hours=i*3) for i in range(N)]
+#    i = 6
+    _dates = [dt.datetime(Y,7,1) + dt.timedelta(hours=i*3)]
     print("-->Process for year:%d"%Y)
     years = [Y] * len(_dates)
     regs = [reg] * len(_dates)

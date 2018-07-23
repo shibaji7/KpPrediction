@@ -24,7 +24,7 @@ from kgp.losses import gen_gp_loss
 from kgp.metrics import root_mean_squared_error as RMSE
 
 os.environ["GPML_PATH"] = "/home/shibaji7/anaconda3/envs/deep/lib/python2.7/site-packages/kgp/backend/gpml/"
-os.system("module load matlab/R2018a")
+os.system("module load matlab")
 
 def main():
     # Load data
