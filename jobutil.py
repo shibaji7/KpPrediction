@@ -164,7 +164,7 @@ def run_lstm_clf_reg_model(args):
         model = args[0]
         trw = int(args[1])
         if args[2] == "all":
-            for y in range(1995,2017): M.run_model_based_on_lstm(y, model="LSTM", trw = trw)
+            for y in range(2001,2017): M.run_model_based_on_lstm(y, model="LSTM", trw = trw)
             pass
         else:
             y = int(args[2])
@@ -177,12 +177,13 @@ def run_lstmgp_clf_reg_model(args):
     else:
         model = args[0]
         trw = int(args[1])
+        i = int(args[3])
         if args[2] == "all":
-            for y in range(1995,2017): M.run_model_based_on_deepgp(y, model="deepGP", trw = trw)
+            for y in range(1995,2017): M.run_model_based_on_deepgp(y, model="deepGP", trw = trw, i = 0)
             pass
         else:
             y = int(args[2])
-            M.run_model_based_on_deepgp(y, model="deepGP", trw = trw)
+            M.run_model_based_on_deepgp(y, model="deepGP", trw = trw,i=i)
         pass
     return
 
