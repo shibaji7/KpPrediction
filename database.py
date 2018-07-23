@@ -236,10 +236,10 @@ def load_data_with_goes_for_deterministic_bin_clf(th=4.5, mI=1):
     _o["_dkp_lt"] = dkp_tx
     _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
     _o = transform_variables(_o) 
-    _o["_a_max"] = _goes_am
-    _o["_b_max"] = _goes_bm
-    _o["_a_std"] = _goes_as
-    _o["_b_std"] = _goes_bs
+    _o["_a_max"] = _goes_am * 1e9
+    _o["_b_max"] = _goes_bm * 1e7
+    _o["_a_std"] = _goes_as * 1e9
+    _o["_b_std"] = _goes_bs * 1e7
     stormL = np.zeros(len(_dkp))
     stormL[dkp_tx > th] = 1.
     _o["stormL"] = stormL
@@ -332,7 +332,6 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y= None):
             "Date_FC","K_P_delay","K_P_LT_delay"]
     delay = 3*mI
     _g = read_goes()
-    print(_g.head())
     _o = read_omni_data()
     if y is not None: _o = _o[_o.sdates<dt.datetime(y,1,1)]
     _k = read_kp()
@@ -348,8 +347,8 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y= None):
         FC_time = now + dt.timedelta(hours=delay)
         delay_time.append(FC_time)
         now_g = _g[_g.times == now]
-        print now
-        if len(now_g) == 0:
+        print now_g
+        if len(now_g) == 0 or now_g._a_max.tolist()[0]==0.:
             _goes_am.append(_goes_am[-1])
             _goes_bm.append(_goes_bm[-1])
             _goes_as.append(_goes_as[-1])
@@ -376,10 +375,10 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y= None):
     _o["_kp_lt"] = do_transform_Kp2lin(_o.Kp)
     _o = transform_variables(_o)
     if isgoes:
-        _o["_a_max"] = _goes_am
-        _o["_b_max"] = _goes_bm
-        _o["_a_std"] = _goes_as
-        _o["_b_std"] = _goes_bs
+        _o["_a_max"] = np.log10(_goes_am)
+        _o["_b_max"] = np.log10(_goes_bm)
+        _o["_a_std"] = np.log10(_goes_as)
+        _o["_b_std"] = np.log10(_goes_bs)
         pass
     stormL = np.zeros(len(_dkp))
     stormL[dkp_tx > th] = 1.
@@ -393,5 +392,6 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y= None):
     _yparam = ["stormL"]
     X = _o.as_matrix(_xparams)
     y = _o.as_matrix(_yparam)
+    print X.shape
     return _xparams, X, y
 

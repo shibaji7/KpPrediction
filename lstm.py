@@ -26,11 +26,11 @@ def create_model(input_length):
 
 def get_data():
     _xparams, X, y = db.load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = True, y=2017)
-    print _xparams
     y = np.asarray(y[:,0].tolist())
     sclX = MinMaxScaler(feature_range=(0, 1))
     sclX.fit(X)
     X = sclX.transform(X)
+    print X[0]
     return X,y
 
 
