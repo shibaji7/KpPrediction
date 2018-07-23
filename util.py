@@ -369,7 +369,7 @@ def plot_pred(model,trw):
     ax.legend(loc="upper left")
     ax.tick_params(axis="both",which="major",labelsize="15")
     ax.set_xlim(dt.datetime(2004,7,1), dt.datetime(2004,8,28))
-    fig.savefig("out/stat/det.pred.%s.%d.line.png"%(model,trw))
+    fig.savefig("out/stat/det.pred.%s.%d.line.png"%(model,trw),bbox_inches="tight")
     return
 
 plot_pred("deepGP",27)
