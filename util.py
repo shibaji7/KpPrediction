@@ -385,7 +385,7 @@ def proba_storm_forcast(model,trw):
     _o = pd.read_csv(fname)
     _o.dn = pd.to_datetime(_o.dn)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
-    _o = _o[(_o.dn >= dt.datetime(2004,7,1)) & (_o.dn <= dt.datetime(2004,8,28))]
+    _o = _o[(_o.dn >= dt.datetime(2004,7,22)) & (_o.dn <= dt.datetime(2004,7,28))]
     _o = _o.drop_duplicates(subset=["dn"])
     y_pred = np.array(_o.y_pred.tolist())
     y_obs = np.array(_o.y_obs.tolist())
@@ -395,6 +395,8 @@ def proba_storm_forcast(model,trw):
     #fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     ax = fig.add_subplot(spec[0, 0])
     markerline, stemlines, baseline = ax.stem(_o.dn, y_pred, '-.')
+    ax.set_ylim(0,9)
+    ax.set_xlim(dt.datetime(2004,7,22), dt.datetime(2004,7,28))
     ax = fig.add_subplot(spec[1:, 0])
     fmt = matplotlib.dates.DateFormatter("%m-%d")
     ax.xaxis.set_major_formatter(fmt)
