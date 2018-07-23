@@ -397,6 +397,7 @@ def proba_storm_forcast(model,trw):
     markerline, stemlines, baseline = ax.stem(_o.dn, y_pred, '-.')
     ax.set_ylim(0,9)
     ax.set_xlim(dt.datetime(2004,7,22), dt.datetime(2004,7,28))
+
     ax = fig.add_subplot(spec[1:, 0])
     fmt = matplotlib.dates.DateFormatter("%m-%d")
     ax.xaxis.set_major_formatter(fmt)
