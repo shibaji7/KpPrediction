@@ -349,7 +349,7 @@ def plot_pred(model,trw):
     _o = _o.drop_duplicates(subset=["dn"])
     y_pred = np.array(_o.y_pred.tolist())
     y_obs = np.array(_o.y_obs.tolist())
-    sigma = 1.1 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
+    sigma = 1.5 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
     splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     fmt = matplotlib.dates.DateFormatter("%m-%d")
