@@ -337,4 +337,30 @@ def run_for_TSS(model, trw):
     ax.set_xlim(dt.datetime(1995,1,1), dt.datetime(2017,1,1))
     ax.set_ylim(0,100)
     fig.savefig("out/stat/det.%s.tss.%d.png"%(model,trw)) 
-
+    
+def plot_pred(model,trw):
+    fname = "out/det.%s.pred.%d.csv"%(model,trw)
+    print(fname)
+    _o = pd.read_csv(fname)
+    _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
+    _o = _o[(_o.dn >= dt.datetime(2004,7,1)) & (_o.dn <= dt.datetime(2004,8,28))]
+    y_pred = np.array(_o.y_pred.tolist())
+    y_obs = np.array(_o.y_obs.tolist())
+    sigma = 1.1 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
+    splot.style("spacepy")
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    ax.plot(_o.dn,y_obs,"ro",markersize=10,label=r"$K_{P_{obs}}$")
+    ax.plot(_o.dn,y_pred,"bo",markersize=5,label=r"$K_{P_{pred}}$")
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]),
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.4, fc='b', ec='None', label='95% confidence interval')
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]),
+         np.concatenate([y_pred - 0.684 * sigma,
+                        (y_pred + 0.684 * sigma)[::-1]]),
+         alpha=.4, fc='b', ec='None', label='50% confidence interval')
+    ax.set_xlabel(r"$K_{P_{pred}}$")
+    ax.set_ylabel(r"$UT$")
+    ax.legend(loc="upper left")
+    fig.savefig("out/stat/det.pred.%s.%d.line.png"%(model,trw))
+    return
