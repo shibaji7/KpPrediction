@@ -324,7 +324,7 @@ def load_data_with_goes_for_deterministic_reg(mI=1):
 ##
 # Build X,y (goes) data for deterministic classifier model
 ##
-def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False):
+def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y= None):
     params = ["Bx_m","By_m","Bz_m","V_m","Vx_m","Vy_m","Vz_m","PR_d_m","T_m","P_dyn_m","E_m","beta_m",
             "Ma_m","sdates","Kp","_kp_lt","delay_time","_dkp","_dkp_lt"]
     headers = ["B_x","B_T","sin_tc","V","n","T",
@@ -334,7 +334,7 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False):
     _g = read_goes()
     print(_g.head())
     _o = read_omni_data()
-    #_o = _o[_o.sdates<dt.datetime(1996,1,1)]
+    if y is not None: _o = _o[_o.sdates<dt.datetime(y,1,1)]
     _k = read_kp()
     _dkp = []
     _kp = []
@@ -348,6 +348,7 @@ def load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False):
         FC_time = now + dt.timedelta(hours=delay)
         delay_time.append(FC_time)
         now_g = _g[_g.times == now]
+        print now
         if len(now_g) == 0:
             _goes_am.append(_goes_am[-1])
             _goes_bm.append(_goes_bm[-1])
