@@ -60,5 +60,7 @@ if xx:
     plt.ylabel('True positive rate')
     plt.title('ROC curve')
     plt.legend(loc='best')
+    plt.xlim(0,1)
+    plt.ylim(0,1)
     #plt.show()
-plt.savefig("out/stat/keras.roc.png")
+    plt.savefig("out/stat/keras.roc.png")
