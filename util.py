@@ -373,3 +373,48 @@ def plot_pred(model,trw):
     return
 
 plot_pred("deepGP",27)
+
+
+def proba_storm_forcast(model,trw):
+    fname = "out/det.%s.pred.%d.csv"%(model,trw)
+    matplotlib.rcParams['xtick.labelsize'] = 10 
+    print(fname)
+    _o = pd.read_csv(fname)
+    _o.dn = pd.to_datetime(_o.dn)
+    _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
+    _o = _o[(_o.dn >= dt.datetime(2004,7,1)) & (_o.dn <= dt.datetime(2004,8,28))]
+    _o = _o.drop_duplicates(subset=["dn"])
+    y_pred = np.array(_o.y_pred.tolist())
+    y_obs = np.array(_o.y_obs.tolist())
+    sigma = 3 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
+    splot.style("spacepy")
+    fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
+    fmt = matplotlib.dates.DateFormatter("%m-%d")
+    ax.xaxis.set_major_formatter(fmt)
+    ax.plot(_o.dn,y_obs,"ro",markersize=5,label=r"$K_{P_{obs}}$",alpha=0.6)
+    ax.plot(_o.dn,y_pred,"bo",markersize=3,label=r"$K_{P_{pred}}$")
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]),
+         np.concatenate([y_pred - 1.9600 * sigma,
+                        (y_pred + 1.9600 * sigma)[::-1]]),
+         alpha=.4, fc='b', ec='None', label='95% confidence interval')
+    ax.fill(np.concatenate([_o.dn.tolist(), _o.dn.tolist()[::-1]]),
+         np.concatenate([y_pred - 0.684 * sigma,
+                        (y_pred + 0.684 * sigma)[::-1]]),
+         alpha=.7, fc='b', ec='None', label='50% confidence interval')
+    ax.plot(_o.dn,4.5*np.ones(len(_o)),"k-.",markersize=3,label=r"$K_{P_{G_0}}$")
+    ax.set_ylabel(r"$K_{P_{pred}}$")
+    ax.set_xlabel(r"$UT$")
+    ax.legend(loc="upper left")
+    ax.tick_params(axis="both",which="major",labelsize="15")
+    ax.set_xlim(dt.datetime(2004,7,22), dt.datetime(2004,7,28))
+    for m,s,d in zip(y_pred, sigma,_o.dn.tolist()):
+        dd = [d, d+dt.timedelta(hours=3)]
+        vv = [14,15]
+        ax.fill(np.concatenate([dd, dd[::-1]]),
+         np.concatenate([vv,(vv)[::-1]]),
+         alpha=.7, fc='b', ec='None',)
+        pass
+    ax.set_ylim(-2,15)
+    fig.savefig("out/stat/det.pred.%s.%d.forecast.png"%(model,trw),bbox_inches="tight")
+    return
+proba_storm_forcast("deepGP",27)
