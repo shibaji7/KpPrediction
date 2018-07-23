@@ -9,6 +9,8 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import roc_curve, auc
 
+from spacepy import plot as splot
+
 np.random.seed(0)
 
 import database as db
@@ -23,7 +25,7 @@ def create_model(input_length):
     return model
 
 def get_data():
-    _xparams, X, y = db.load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = True, y=2017)
+    _xparams, X, y = db.load_data_with_goes_for_lstm_bin_clf(th=4.5, mI=1, isgoes = False, y=2017)
     print _xparams
     y = np.asarray(y[:,0].tolist())
     sclX = MinMaxScaler(feature_range=(0, 1))
@@ -52,6 +54,7 @@ auc_keras = auc(fpr_keras, tpr_keras)
 print auc_keras
 xx = True
 if xx:
+    splot.style("spacepy")
     plt.figure(1)
     plt.plot([0, 1], [0, 1], 'k--')
     plt.plot(fpr_keras, tpr_keras, label='Keras (area = {:.3f})'.format(auc_keras))
@@ -63,4 +66,4 @@ if xx:
     plt.xlim(0,1)
     plt.ylim(0,1)
     #plt.show()
-    plt.savefig("out/stat/keras.roc.png")
+    plt.savefig("out/stat/keras.roc.fr.png")
