@@ -393,12 +393,14 @@ def proba_storm_forcast(model,trw):
     splot.style("spacepy")
     fig = plt.figure(figsize=(10,6))
     #fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
-    ax = fig.add_subplot(spec[0, 0])
+    ax = fig.add_subplot(spec[0:3, 0])
     markerline, stemlines, baseline = ax.stem(_o.dn, y_pred, '-.')
     ax.set_ylim(0,9)
+    ax.set_xticks([])
+    ax.set_xticklabels([])
     ax.set_xlim(dt.datetime(2004,7,22), dt.datetime(2004,7,28))
 
-    ax = fig.add_subplot(spec[1:, 0])
+    ax = fig.add_subplot(spec[3:, 0])
     fmt = matplotlib.dates.DateFormatter("%m-%d")
     ax.xaxis.set_major_formatter(fmt)
     ax.plot(_o.dn,y_obs,"ro",markersize=5,label=r"$K_{P_{obs}}$",alpha=0.6)
@@ -420,7 +422,7 @@ def proba_storm_forcast(model,trw):
     for m,s,d in zip(y_pred, sigma,_o.dn.tolist()):
         pr = np.round((1 - norm.cdf(4.5, m, s))*100,2)
         if pr > 30.:
-            ax.text(d,15,str(pr)+"%",rotation=90)
+            ax.text(d,12.5,str(pr)+"%",rotation=90)
         pass
     ax.set_ylim(-2,15)
     fig.savefig("out/stat/det.pred.%s.%d.forecast.png"%(model,trw),bbox_inches="tight")
