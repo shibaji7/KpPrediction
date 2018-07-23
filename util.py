@@ -342,8 +342,10 @@ def plot_pred(model,trw):
     fname = "out/det.%s.pred.%d.csv"%(model,trw)
     print(fname)
     _o = pd.read_csv(fname)
+    _o.dn = pd.to_datetime(_o.dn)
     _o = _o[(_o.prob_clsf != -1.) & (_o.y_pred != -1.) & (_o.y_pred >= 0) & (_o.y_pred <= 9.)]
     _o = _o[(_o.dn >= dt.datetime(2004,7,1)) & (_o.dn <= dt.datetime(2004,8,28))]
+    _o = _o.drop_duplicates(subset=["dn"])
     y_pred = np.array(_o.y_pred.tolist())
     y_obs = np.array(_o.y_obs.tolist())
     sigma = 1.1 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
@@ -364,3 +366,5 @@ def plot_pred(model,trw):
     ax.legend(loc="upper left")
     fig.savefig("out/stat/det.pred.%s.%d.line.png"%(model,trw))
     return
+
+plot_pred("deepGP",27)
