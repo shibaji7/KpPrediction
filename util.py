@@ -396,7 +396,7 @@ def proba_storm_forcast(model,trw):
     #fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     ax0 = fig.add_subplot(spec[0:2, 0])
     ax0.set_ylim(0,9)
-    ax0.set_yticks([0,3,5,9])
+    ax0.set_yticks([0,3,6,9])
     ax0.set_xticks([])
     ax0.set_xticklabels([])
     ax0.set_xlim(dt.datetime(2004,7,21,21), dt.datetime(2004,7,28,3))
