@@ -428,7 +428,7 @@ def proba_storm_forcast(model,trw):
         if pr > 60.: c = "red"
         if pr > 30.: ax.text(d,12.5,str(pr)+"%",rotation=90)
         markerline, stemlines, baseline = ax0.stem([d], [m], c)
-        ax0.plot([d],[m],c,marker="o",markersize=5)
+        ax0.plot([d],[m],c,marker="o",markersize=6)
         #plt.setp(stemlines, 'color', cmap(pr/100.))
         plt.setp(stemlines, 'linewidth', 3.5)
         pass
