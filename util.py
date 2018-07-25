@@ -97,7 +97,7 @@ def get_classifiers():
     etsc = ExtraTreesClassifier(n_estimators=50,criterion="entropy")
     gb = GradientBoostingClassifier(max_depth=5,random_state=0)
     rfc = RandomForestClassifier(n_estimators=100)
-    C3 = {"name":"Ensamble","methods":[(ada, "Ada Boost"),(bg,"Bagging"),(etsc, "Extra Trees"),
+    C3 = {"name":"Ensemble","methods":[(ada, "Ada Boost"),(bg,"Bagging"),(etsc, "Extra Trees"),
         (gb, "Gradient Boosting"), (rfc, "Random Forest")]}
 
     # discriminant analysis & GPC
@@ -134,7 +134,7 @@ def plot_deterministic_roc_curves(roc_eval_details, tag):
         clf_type = roc_eval_details[gname]
         for name in clf_type.keys():
             roc = roc_eval_details[gname][name]
-            ax.plot(roc["fpr"], roc["tpr"], color=roc["c"], lw = lw, label="ROC curve (%s:area = %0.2f)" % (name,roc["roc_auc"]))
+            ax.plot(roc["fpr"], roc["tpr"], color=roc["c"], lw = lw, label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
             pass
         ax.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
         ax.set_xlim([0.0, 1.0])
@@ -142,7 +142,7 @@ def plot_deterministic_roc_curves(roc_eval_details, tag):
         ax.set_title(gname)
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
-        ax.legend(loc="lower right",prop={"size": 7})
+        ax.legend(loc="lower right",prop={"size": 10})
         I = I + 1
         pass
     fig.savefig("out/deterministinc_forecast_models_roc_curves_%s.png"%tag,bbox_inches="tight")
