@@ -123,7 +123,7 @@ def get_roc_details(clf, X_test, y_test):
     return y_score, fpr, tpr, roc_auc
 
 def plot_deterministic_roc_curves(roc_eval_details, tag):
-    fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(10,6),dpi=180)
+    fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(12,8),dpi=180)
     fig.subplots_adjust(wspace=0.5,hspace=0.5)
     splot.style("spacepy")
     lw = 2
@@ -142,7 +142,7 @@ def plot_deterministic_roc_curves(roc_eval_details, tag):
         ax.set_title(gname)
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
-        ax.legend(loc="lower right",prop={"size": 8})
+        ax.legend(loc="lower right",prop={"size": 6})
         I = I + 1
         pass
     fig.savefig("out/deterministinc_forecast_models_roc_curves_%s.png"%tag,bbox_inches="tight")
