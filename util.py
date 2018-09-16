@@ -123,7 +123,7 @@ def get_roc_details(clf, X_test, y_test):
     return y_score, fpr, tpr, roc_auc
 
 def plot_deterministic_roc_curves(roc_eval_details, tag):
-    fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(10,6),dpi=150)
+    fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(10,6),dpi=180)
     fig.subplots_adjust(wspace=0.5,hspace=0.5)
     splot.style("spacepy")
     lw = 2
