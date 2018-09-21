@@ -135,11 +135,11 @@ def plot_deterministic_roc_curves(roc_eval_details):
         i,j = int(I/3), int(np.mod(I,3))
         ax = axes[i,j]
         clf_type = roc_eval_details[gname]
-        print(gname)
+        print(gname,clf_type.keys())
         for name in clf_type.keys():
-            print(name)
             roc = roc_eval_details[gname][name]
-            ax.plot(x=roc["fpr"], y=roc["tpr"],  color=roc["c"], lw = lw, label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
+            print(name)
+            ax.plot(x=roc["fpr"], y=roc["tpr"],  color=roc["c"], label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
             pass
         ax.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
         ax.set_xlim([0.0, 1.0])

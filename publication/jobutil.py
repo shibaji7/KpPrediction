@@ -53,7 +53,7 @@ def build_all_classifiers(goes):
     for name in _C2x2.keys():
         print("Running '%s' model" % name)
         print("==================")
-        _C2x2[name].summary(verbose=True)
+        #_C2x2[name].summary(verbose=True)
         print("**************************************************")
         print("\n\n")
         pass
