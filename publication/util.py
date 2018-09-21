@@ -129,7 +129,6 @@ def plot_deterministic_roc_curves(roc_eval_details):
     fig, axes = plt.subplots(nrows=2,ncols=3,figsize=(12,8),dpi=180)
     fig.subplots_adjust(wspace=0.5,hspace=0.5)
     #splot.style("spacepy")
-    sns.set(style="darkgrid")
     lw = 2
     I = 0
     for gname in roc_eval_details.keys():
@@ -138,7 +137,7 @@ def plot_deterministic_roc_curves(roc_eval_details):
         clf_type = roc_eval_details[gname]
         for name in clf_type.keys():
             roc = roc_eval_details[gname][name]
-            sns.lineplot(x=roc["fpr"], y=roc["tpr"], ax = ax, color=roc["c"], lw = lw, label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
+            ax.plot(x=roc["fpr"], y=roc["tpr"],  color=roc["c"], lw = lw, label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
             pass
         ax.plot([0, 1], [0, 1], color="navy", lw=lw, linestyle="--")
         ax.set_xlim([0.0, 1.0])
