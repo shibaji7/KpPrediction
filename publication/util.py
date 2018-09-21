@@ -15,7 +15,7 @@ import math
 from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import norm
-import seaborn as sns
+#import seaborn as sns
 
 np.random.seed(7)
 import database as db
@@ -44,7 +44,7 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, Matern, RationalQuadratic as RQ
 
 from sklearn.externals import joblib
-from spacepy import plot as splot
+#from spacepy import plot as splot
 from imblearn.under_sampling import RandomUnderSampler
 import verify
 from verify import Contingency2x2
@@ -135,7 +135,9 @@ def plot_deterministic_roc_curves(roc_eval_details):
         i,j = int(I/3), int(np.mod(I,3))
         ax = axes[i,j]
         clf_type = roc_eval_details[gname]
+        print(gname)
         for name in clf_type.keys():
+            print(name)
             roc = roc_eval_details[gname][name]
             ax.plot(x=roc["fpr"], y=roc["tpr"],  color=roc["c"], lw = lw, label="%s:AUC = %0.2f" % (name,roc["roc_auc"]))
             pass
@@ -354,7 +356,7 @@ def plot_pred(model,trw):
     y_pred = np.array(_o.y_pred.tolist())
     y_obs = np.array(_o.y_obs.tolist())
     sigma = 3 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
-    splot.style("spacepy")
+    #splot.style("spacepy")
     fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
     fmt = matplotlib.dates.DateFormatter("%m-%d")
     ax.xaxis.set_major_formatter(fmt)
@@ -376,7 +378,7 @@ def plot_pred(model,trw):
     fig.savefig("out/stat/det.pred.%s.%d.line.png"%(model,trw),bbox_inches="tight")
     return
 
-plot_pred("deepGP",27)
+#plot_pred("deepGP",27)
 
 
 def proba_storm_forcast(model,trw):
@@ -393,7 +395,7 @@ def proba_storm_forcast(model,trw):
     y_pred = np.array(_o.y_pred.tolist())
     y_obs = np.array(_o.y_obs.tolist())
     sigma = 3 * np.abs(np.array(_o.y_pred) - np.array(_o.lb))
-    splot.style("spacepy")
+    #splot.style("spacepy")
     fig = plt.figure(figsize=(10,6))
     fig.subplots_adjust(hspace=0.5)
     #fig, ax = plt.subplots(nrows=1,ncols=1,figsize=(10,6))
@@ -438,4 +440,4 @@ def proba_storm_forcast(model,trw):
     ax.set_ylim(-2,15)
     fig.savefig("out/stat/det.pred.%s.%d.forecast.png"%(model,trw),bbox_inches="tight")
     return
-proba_storm_forcast("deepGP",27)
+#proba_storm_forcast("deepGP",27)
