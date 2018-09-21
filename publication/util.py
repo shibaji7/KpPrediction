@@ -52,6 +52,8 @@ from verify import Contingency2x2
 from keras.models import Sequential
 from keras.layers import Dense,LSTM,Embedding,Dropout
 
+plt.style.use("fivethirtyeight")
+
 def nan_helper(y):
     nans = np.isnan(y)
     x = lambda z: z.nonzero()[0]
